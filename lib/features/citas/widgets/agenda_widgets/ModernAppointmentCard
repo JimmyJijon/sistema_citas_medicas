@@ -1,0 +1,217 @@
+import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+
+class AgendaAppointmentCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final Function(String action) onAction;
+
+  const AgendaAppointmentCard({
+    Key? key,
+    required this.data,
+    required this.onAction,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    String estado = data['estado'];
+    bool esEditable = (estado == "Ingresada" || estado == "Reagendada");
+
+    // Definir colores según estado
+    Color colorEstado;
+    Color colorFondoEstado;
+    switch (estado) {
+      case "Ingresada":
+        colorEstado = Colors.blue.shade800;
+        colorFondoEstado = Colors.blue.shade100;
+        break;
+      case "Completada":
+        colorEstado = Colors.green.shade800;
+        colorFondoEstado = Colors.green.shade100;
+        break;
+      case "Cancelada":
+        colorEstado = Colors.red.shade800;
+        colorFondoEstado = Colors.red.shade100;
+        break;
+      default:
+        colorEstado = Colors.grey.shade800;
+        colorFondoEstado = Colors.grey.shade300;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15), // Separación entre tarjetas
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // --- PARTE SUPERIOR: DATOS ---
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Avatar (Icono visual)
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldBlue.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(Icons.person, color: AppColors.primary, size: 28),
+                ),
+                const SizedBox(width: 15),
+
+                // 2. Información Principal
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data['paciente'],
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      // Fecha y Hora con iconito
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                          const SizedBox(width: 5),
+                          Text(
+                            "${data['fecha']}  •  ${data['hora']}",
+                            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 3. Estado (Badge)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: colorFondoEstado,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    estado,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: colorEstado,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // --- LÍNEA DIVISORIA SUTIL ---
+          Divider(height: 1, color: Colors.grey.shade200),
+
+          // --- PARTE INFERIOR: ACCIONES ---
+          // Aquí los iconos tienen MUCHO espacio y se ven elegantes
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround, // Distribuye espacio igual
+              children: [
+                // Botón Ver Detalle (Con texto para que sea claro)
+                _ActionButton(
+                  icon: Icons.visibility_outlined,
+                  label: "Ver",
+                  color: Colors.brown,
+                  onTap: () => onAction("ver"),
+                ),
+
+                if (esEditable) ...[
+                  _VerticalDivider(),
+                  _ActionButton(
+                    icon: Icons.sync,
+                    label: "Reagendar",
+                    color: Colors.blueGrey,
+                    onTap: () => onAction("reagendar"),
+                  ),
+                  _VerticalDivider(),
+                  _ActionButton(
+                    icon: Icons.check_circle_outline,
+                    label: "Completar",
+                    color: AppColors.btnGreen, // Asegúrate de que este color contraste bien
+                    onTap: () => onAction("completar"),
+                  ),
+                  _VerticalDivider(),
+                  _ActionButton(
+                    icon: Icons.cancel_outlined,
+                    label: "Cancelar",
+                    color: AppColors.btnRed,
+                    onTap: () => onAction("cancelar"),
+                  ),
+                ]
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Widget auxiliar para los botones de acción
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        child: Column(
+          children: [
+            Icon(icon, size: 22, color: color),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(fontSize: 10, color: color.withOpacity(0.8)),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 20,
+      width: 1,
+      color: Colors.grey.shade200,
+    );
+  }
+}
