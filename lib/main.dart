@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
-
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MainApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // Quita la etiqueta "DEBUG" de la esquina
-      title: 'Gestor de Citas',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue, // O el color base que prefieras
+    return const MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('Hello World!'),
+        ),
       ),
-      // AQUÍ es donde defines que pantalla arranca primero
-      home: const AgendaView(), 
     );
   }
 }
