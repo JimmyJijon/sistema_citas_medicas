@@ -4,6 +4,7 @@ import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 // Pantallas de agenda y registrar cita
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view.dart';
+import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_screen.dart';
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
@@ -57,11 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         break;
 
-      case "Gestión de Pacientes":
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Módulo de Pacientes en construcción')),
+      case "Usuarios":
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const GestionUsuariosScreen()),
         );
         break;
+      
 
       default:
         ScaffoldMessenger.of(context).showSnackBar(
@@ -432,6 +435,7 @@ class MenuGrid extends StatelessWidget {
       "Restricciones de\nhorario",
       "Gestión de Pacientes",
       "Reportes",
+      
     ];
 
     return Padding(

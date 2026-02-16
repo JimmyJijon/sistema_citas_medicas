@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.blue, // O el color base que prefieras
       ),
       // AQUÍ es donde defines que pantalla arranca primero
-      home: const HorarioScreen(),
+      home: const LoginScreen(),
     );
   }
 }

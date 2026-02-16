@@ -202,7 +202,7 @@ class _RegistrarUsuarioScreenState
               children: [
 
                 const Text(
-                  "Registrar Usuario",
+                  "Editar Usuario",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
