@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sistema_citas_medicas/features/alertas/screens/alerts_view.dart';
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.blue, // O el color base que prefieras
       ),
       // AQUÍ es donde defines que pantalla arranca primero
-      home: const LoginScreen(),
+      home: const AlertsView(),
     );
   }
 }
