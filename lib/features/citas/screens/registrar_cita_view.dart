@@ -237,7 +237,9 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                           child: const Text("Cancelar"),
                         ),
                       ],

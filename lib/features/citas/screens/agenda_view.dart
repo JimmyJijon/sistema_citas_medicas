@@ -77,8 +77,7 @@ class _AgendaViewState extends State<AgendaView> {
                 elevation: 3, // Sombra suave
               ),
               onPressed: () {
-                // Navigator.pop(context);
-                print("Volver presionado");
+                Navigator.pop(context);
               },
               // Usamos Row para agregar una flechita junto al texto
               child: const Row(
