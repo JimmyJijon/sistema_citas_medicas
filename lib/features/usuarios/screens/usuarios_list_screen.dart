@@ -1,21 +1,12 @@
 import 'package:flutter/material.dart';
+// Asumiendo que tienes estos archivos según los pasos anteriores.
+// Si no, puedes copiar las clases AppHeader y AppColors al final de este archivo.
+import 'package:sistema_citas_medicas/core/theme/app_colors.dart'; 
+import 'package:sistema_citas_medicas/features/citas/widgets/app_header.dart'; 
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: GestionUsuariosScreen(),
-    );
-  }
-}
-
+// ==========================================
+// 1. MODELO DE DATOS
+// ==========================================
 class Usuario {
   String nombre;
   String usuario;
@@ -32,16 +23,18 @@ class Usuario {
   });
 }
 
+// ==========================================
+// 2. PANTALLA LISTA DE USUARIOS
+// ==========================================
 class GestionUsuariosScreen extends StatefulWidget {
   const GestionUsuariosScreen({super.key});
 
   @override
-  State<GestionUsuariosScreen> createState() =>
-      _GestionUsuariosScreenState();
+  State<GestionUsuariosScreen> createState() => _GestionUsuariosScreenState();
 }
 
 class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
-
+  // Lista simulada
   List<Usuario> usuarios = [
     Usuario(
         nombre: "Jenny Montalvo",
@@ -60,123 +53,189 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB8D3E0),
-      body: Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+      backgroundColor: AppColors.background, // Color de fondo del tema
+      body: Column(
+        children: [
+          // HEADER DEL TEMA
+          const AppHeader(title: "Inicio / Configuración / Usuarios"),
 
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+          // BOTÓN VOLVER
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 100,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.btnGreen,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
-                  onPressed: () {},
-                  child: const Text("Volver"),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    "Volver",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
+            ),
+          ),
 
-              const SizedBox(height: 10),
-
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.lightBlue.shade200,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  "Gestión de Usuarios",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+          // CONTENIDO PRINCIPAL
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                   BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
-
-              const SizedBox(height: 15),
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
-                onPressed: () async {
-                  final nuevoUsuario = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const RegistrarUsuarioScreen(),
+              child: Column(
+                children: [
+                  // Título de sección
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  );
-
-                  if (nuevoUsuario != null) {
-                    setState(() {
-                      usuarios.add(nuevoUsuario);
-                    });
-                  }
-                },
-                child: const Text("+ Nuevo Usuario"),
-              ),
-
-              const SizedBox(height: 15),
-
-              Expanded(
-                child: ListView.builder(
-                  itemCount: usuarios.length,
-                  itemBuilder: (context, index) {
-                    final user = usuarios[index];
-
-                    return Card(
-                      child: ListTile(
-                        title: Text(user.nombre),
-                        subtitle:
-                            Text("${user.rol} - ${user.estado}"),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () async {
-                            final actualizado = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EditarUsuarioScreen(
-                                  usuario: user,
-                                ),
-                              ),
-                            );
-
-                            if (actualizado != null) {
-                              setState(() {
-                                usuarios[index] = actualizado;
-                              });
-                            }
-                          },
+                    child: const Center(
+                      child: Text(
+                        "Gestión de Usuarios",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Botón Nuevo Usuario
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.btnGreen,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () async {
+                        final nuevoUsuario = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FormularioUsuarioScreen(), // Modo crear
+                          ),
+                        );
+
+                        if (nuevoUsuario != null && nuevoUsuario is Usuario) {
+                          setState(() {
+                            usuarios.add(nuevoUsuario);
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.add, color: Colors.black),
+                      label: const Text(
+                        "Nuevo Usuario",
+                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Lista de Usuarios
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: usuarios.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final user = usuarios[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blueGrey[100],
+                              child: Text(
+                                user.nombre.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            title: Text(
+                              user.nombre,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text("${user.rol} • ${user.estado}"),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                              onPressed: () async {
+                                final actualizado = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => FormularioUsuarioScreen(usuarioParaEditar: user),
+                                  ),
+                                );
+
+                                if (actualizado != null && actualizado is Usuario) {
+                                  setState(() {
+                                    usuarios[index] = actualizado;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class RegistrarUsuarioScreen extends StatefulWidget {
-  const RegistrarUsuarioScreen({super.key});
+// ==========================================
+// 3. PANTALLA FORMULARIO (CREAR / EDITAR)
+// ==========================================
+class FormularioUsuarioScreen extends StatefulWidget {
+  final Usuario? usuarioParaEditar;
+
+  const FormularioUsuarioScreen({super.key, this.usuarioParaEditar});
 
   @override
-  State<RegistrarUsuarioScreen> createState() =>
-      _RegistrarUsuarioScreenState();
+  State<FormularioUsuarioScreen> createState() => _FormularioUsuarioScreenState();
 }
 
-class _RegistrarUsuarioScreenState
-    extends State<RegistrarUsuarioScreen> {
-
+class _FormularioUsuarioScreenState extends State<FormularioUsuarioScreen> {
   final nombreController = TextEditingController();
   final usuarioController = TextEditingController();
   final passwordController = TextEditingController();
@@ -184,138 +243,178 @@ class _RegistrarUsuarioScreenState
 
   String rol = "Recepcionista";
   String estado = "Activo";
+  bool esEdicion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Lógica para cargar datos si es edición
+    if (widget.usuarioParaEditar != null) {
+      esEdicion = true;
+      nombreController.text = widget.usuarioParaEditar!.nombre;
+      usuarioController.text = widget.usuarioParaEditar!.usuario;
+      passwordController.text = widget.usuarioParaEditar!.password;
+      confirmController.text = widget.usuarioParaEditar!.password;
+      rol = widget.usuarioParaEditar!.rol;
+      estado = widget.usuarioParaEditar!.estado;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB8D3E0),
-      body: Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          // Header
+          const AppHeader(title: "Inicio / Usuarios / Registro"),
 
-                const Text(
-                  "Editar Usuario",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 15),
-
-                _campo("Nombre", nombreController),
-                _campo("Usuario", usuarioController),
-                _dropdown("Rol", ["Recepcionista", "Administrador"],
-                    (value) => rol = value),
-                _dropdown("Estado", ["Activo", "Inactivo"],
-                    (value) => estado = value),
-                _campo("Contraseña", passwordController,
-                    obscure: true),
-                _campo("Confirmar", confirmController,
-                    obscure: true),
-
-                const SizedBox(height: 15),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green),
-                      onPressed: () {
-                        Navigator.pop(
-                          context,
-                          Usuario(
-                            nombre: nombreController.text,
-                            usuario: usuarioController.text,
-                            rol: rol,
-                            estado: estado,
-                            password: passwordController.text,
-                          ),
-                        );
-                      },
-                      child: const Text("Guardar"),
-                    ),
-                    const SizedBox(width: 15),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text("Cancelar"),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ),
-        ),
+           // CONTENIDO CENTRADO Y ESTILIZADO
+           Expanded(
+             child: Center(
+               child: SingleChildScrollView(
+                 padding: const EdgeInsets.all(20),
+                 child: Container(
+                   padding: const EdgeInsets.all(25),
+                   decoration: BoxDecoration(
+                     color: Colors.white,
+                     borderRadius: BorderRadius.circular(25),
+                     boxShadow: [
+                       BoxShadow(
+                         color: Colors.black.withOpacity(0.05),
+                         blurRadius: 10,
+                         offset: const Offset(0, 4),
+                       )
+                     ],
+                   ),
+                   child: Column(
+                     children: [
+                       Text(
+                         esEdicion ? "Editar Usuario" : "Registrar Usuario",
+                         style: const TextStyle(
+                           fontSize: 20, 
+                           fontWeight: FontWeight.bold
+                         ),
+                       ),
+                       const SizedBox(height: 20),
+                 
+                       _campo("Nombre Completo", nombreController, Icons.person),
+                       _campo("Usuario", usuarioController, Icons.account_circle),
+                       
+                       _dropdown("Rol", ["Recepcionista", "Administrador", "Doctor"], (val) => rol = val),
+                       _dropdown("Estado", ["Activo", "Inactivo"], (val) => estado = val),
+                       
+                       _campo("Contraseña", passwordController, Icons.lock, obscure: true),
+                       _campo("Confirmar Contraseña", confirmController, Icons.lock_outline, obscure: true),
+                 
+                       const SizedBox(height: 25),
+                 
+                       Row(
+                         children: [
+                           Expanded(
+                             child: ElevatedButton(
+                               style: ElevatedButton.styleFrom(
+                                 backgroundColor: Colors.red[400],
+                                 padding: const EdgeInsets.symmetric(vertical: 12),
+                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                               ),
+                               onPressed: () => Navigator.pop(context),
+                               child: const Text("Cancelar", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                             ),
+                           ),
+                           const SizedBox(width: 15),
+                           Expanded(
+                             child: ElevatedButton(
+                               style: ElevatedButton.styleFrom(
+                                 backgroundColor: AppColors.btnGreen,
+                                 padding: const EdgeInsets.symmetric(vertical: 12),
+                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                               ),
+                               onPressed: () {
+                                 // Retornamos el objeto Usuario modificado o creado
+                                 Navigator.pop(
+                                   context,
+                                   Usuario(
+                                     nombre: nombreController.text,
+                                     usuario: usuarioController.text,
+                                     rol: rol,
+                                     estado: estado,
+                                     password: passwordController.text,
+                                   ),
+                                 );
+                               },
+                               child: Text(
+                                 esEdicion ? "Actualizar" : "Guardar", 
+                                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+                               ),
+                             ),
+                           ),
+                         ],
+                       )
+                     ],
+                   ),
+                 ),
+               ),
+             ),
+           ),
+        ],
       ),
     );
   }
 
-  Widget _campo(String label, TextEditingController controller,
-      {bool obscure = false}) {
+  Widget _campo(String label, TextEditingController controller, IconData icon, {bool obscure = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextField(
         controller: controller,
         obscureText: obscure,
         decoration: InputDecoration(
           labelText: label,
+          prefixIcon: Icon(icon, color: Colors.grey),
           filled: true,
-          fillColor: Colors.lightBlue.shade100,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide.none,
+          fillColor: Colors.grey[50], // Fondo muy suave para el input
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.blueGrey),
           ),
         ),
       ),
     );
   }
 
-  Widget _dropdown(
-      String label, List<String> items, Function(String) onChanged) {
-    String value = items.first;
+  Widget _dropdown(String label, List<String> items, Function(String) onChanged) {
+    // Aseguramos que el valor actual esté en la lista, si no, tomamos el primero
+    String initialValue = items.contains(esEdicion && label == "Rol" ? rol : (esEdicion && label == "Estado" ? estado : items.first)) 
+        ? (label == "Rol" ? rol : estado) 
+        : items.first;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: DropdownButtonFormField(
-        value: value,
-        items: items
-            .map((e) =>
-                DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        value: initialValue,
+        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: (val) {
-          onChanged(val!);
+          if (val != null) onChanged(val);
         },
         decoration: InputDecoration(
           labelText: label,
+          prefixIcon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Colors.grey),
           filled: true,
-          fillColor: Colors.lightBlue.shade100,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide.none,
+          fillColor: Colors.grey[50],
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.blueGrey),
           ),
         ),
       ),
     );
-  }
-}
-
-class EditarUsuarioScreen extends StatelessWidget {
-  final Usuario usuario;
-
-  const EditarUsuarioScreen({super.key, required this.usuario});
-
-  @override
-  Widget build(BuildContext context) {
-    return RegistrarUsuarioScreen();
   }
 }

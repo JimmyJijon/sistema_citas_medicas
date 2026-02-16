@@ -4,6 +4,7 @@ import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 // Pantallas de agenda y registrar cita
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view.dart';
+import 'package:sistema_citas_medicas/features/horarios/screens/horario_screen.dart';
 import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_screen.dart';
 
 // ==========================================
@@ -62,6 +63,13 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const GestionUsuariosScreen()),
+        );
+
+        break;
+            case "Configuración de horario":
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HorarioScreen()),
         );
         break;
       
