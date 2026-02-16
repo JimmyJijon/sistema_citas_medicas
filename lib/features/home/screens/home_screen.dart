@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
+// Pantallas de agenda y registrar cita 
+import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
+import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view.dart';
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
 // ==========================================
-
 void main() {
   runApp(
     const MaterialApp(debugShowCheckedModeBanner: false, home: HomeScreen()),
@@ -31,25 +34,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    // Limpiamos el controlador cuando se cierra la pantalla para liberar memoria
     _searchController.dispose();
     super.dispose();
   }
 
   void _onMenuOptionTap(String option) {
-    // LÓGICA: Se manejaria qué pasa al tocar un botón
-    print("Navegar a: $option");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Seleccionaste: $option'),
-        duration: const Duration(milliseconds: 500),
-      ),
-    );
+    final String menuOption = option.replaceAll("\n", " ");
+
+    switch (menuOption) {
+      case "Agenda":
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AgendaView()),
+        );
+        break;
+
+      case "Registrar Cita":
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RegistrarCitaView()),
+        );
+        break;
+
+      case "Gestión de Pacientes":
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Módulo de Pacientes en construcción')),
+        );
+        break;
+
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Seleccionaste: $menuOption (En construcción)'),
+            duration: const Duration(milliseconds: 500),
+          ),
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Pasamos la lógica y los datos a la vista (Diseño)
     return HomeLayout(
       userData: userData,
       searchController: _searchController,
@@ -75,7 +99,6 @@ class HomeLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definición de colores centralizada
     final Color backgroundColor = const Color(0xFF95AAB4);
     final Color darkColor = const Color(0xFF464541);
     final Color cardColor = const Color(0xFFE6E6E1);
@@ -84,7 +107,7 @@ class HomeLayout extends StatelessWidget {
       backgroundColor: backgroundColor,
       body: Column(
         children: [
-          // Header extraído
+          // Header extraído (Ahora Responsive)
           HomeHeader(darkColor: darkColor),
 
           // Sub-header
@@ -143,7 +166,7 @@ class HomeLayout extends StatelessWidget {
 // 3. WIDGETS INDEPENDIENTES (COMPONENTES)
 // ==========================================
 
-// --- HEADER ---
+// --- HEADER CORREGIDO (RESPONSIVE) ---
 class HomeHeader extends StatelessWidget {
   final Color darkColor;
 
@@ -154,78 +177,96 @@ class HomeHeader extends StatelessWidget {
     final Color accentColor = const Color(0xFF88C3C7);
 
     return Container(
-      color: darkColor,
-      padding: const EdgeInsets.only(top: 40, bottom: 10, left: 15, right: 15),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[600],
-            radius: 22,
-            child: const Text(
-              "logo",
-              style: TextStyle(fontSize: 10, color: Colors.black),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              height: 35,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: accentColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              alignment: Alignment.centerLeft,
-              child: const Text(
-                "Sistema de gestión citas medicas",
-                style: TextStyle(
-                  fontFamily: 'Courier',
-                  fontWeight: FontWeight.bold,
+      width: double.infinity,
+      color: darkColor, // El color cubre toda la parte superior
+      child: SafeArea( // SafeArea evita que el contenido toque la barra de estado/notch
+        bottom: false, 
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.grey[600],
+                radius: 22,
+                child: const Text(
+                  "logo",
+                  style: TextStyle(fontSize: 10, color: Colors.black),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Stack(
-            children: [
-              const Icon(Icons.notifications, color: Colors.yellow, size: 30),
-              Positioned(
-                right: 0,
-                top: 0,
+              const SizedBox(width: 10),
+              Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(2),
+                  height: 35,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10),
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  constraints: const BoxConstraints(
-                    minWidth: 14,
-                    minHeight: 14,
-                  ),
+                  alignment: Alignment.centerLeft,
                   child: const Text(
-                    '1',
-                    style: TextStyle(color: Colors.white, fontSize: 10),
-                    textAlign: TextAlign.center,
+                    "Sistema de gestión citas medicas",
+                    style: TextStyle(
+                      fontFamily: 'Courier',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13, // Ajustado para evitar overflow
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              
+              // Notificaciones
+              Stack(
+                children: [
+                  const Icon(Icons.notifications, color: Colors.yellow, size: 30),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 14,
+                        minHeight: 14,
+                      ),
+                      child: const Text(
+                        '1',
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 10),
+              
+              // Botón Logout (Con lógica de salida)
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false, // Borra el historial para no volver atrás
+                  );
+                }, 
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.blueGrey,
+                  child: const Icon(
+                    Icons.power_settings_new,
+                    size: 20,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () =>
-                Navigator.of(context).pop(), // Lógica simple de volver atrás
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.blueGrey,
-              child: const Icon(
-                Icons.power_settings_new,
-                size: 20,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -281,19 +322,19 @@ class UserCard extends StatelessWidget {
                   const SizedBox(height: 5),
                   Text(
                     "Usuario: ${userData['nombre']}",
-                    style: TextStyle(fontFamily: 'Courier'),
+                    style: const TextStyle(fontFamily: 'Courier'),
                   ),
                   Text(
                     "Cedula: ${userData['cedula']}",
-                    style: TextStyle(fontFamily: 'Courier'),
+                    style: const TextStyle(fontFamily: 'Courier'),
                   ),
                   Text(
                     "Rol: ${userData['rol']}",
-                    style: TextStyle(fontFamily: 'Courier'),
+                    style: const TextStyle(fontFamily: 'Courier'),
                   ),
                   Text(
                     "cod: ${userData['codigo']}",
-                    style: TextStyle(fontFamily: 'Courier'),
+                    style: const TextStyle(fontFamily: 'Courier'),
                   ),
                 ],
               ),
@@ -305,7 +346,7 @@ class UserCard extends StatelessWidget {
   }
 }
 
-// --- BARRA DE BÚSQUEDA (AHORA FUNCIONAL) ---
+// --- BARRA DE BÚSQUEDA ---
 class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
 
@@ -324,10 +365,9 @@ class CustomSearchBar extends StatelessWidget {
         children: [
           Icon(Icons.search, color: Colors.cyan[600], size: 30),
           const SizedBox(width: 10),
-          // Aquí está el cambio: Usamos Expanded + TextField
           Expanded(
             child: Container(
-              height: 35, // Altura un poco mayor para que quepa el texto
+              height: 35,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
@@ -340,7 +380,7 @@ class CustomSearchBar extends StatelessWidget {
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 9,
-                  ), // Ajuste fino para centrar texto
+                  ),
                   hintText: "Buscar...",
                   hintStyle: TextStyle(fontSize: 13, fontFamily: 'Courier'),
                   isDense: true,

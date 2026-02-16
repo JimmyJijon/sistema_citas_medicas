@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -132,8 +133,14 @@ class LoginScreen extends StatelessWidget {
                             height: 45,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Acción al presionar ingresar
-                                print("Botón presionado");
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const HomeScreen(),
+                                  ),
+                                  (route) =>
+                                      false, // Esto borra todo el historial anterior (el Login)
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: buttonColor,
