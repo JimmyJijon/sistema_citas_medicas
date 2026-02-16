@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sistema_citas_medicas/features/alertas/screens/alerts_view.dart';
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 // Pantallas de agenda y registrar cita
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
@@ -218,35 +219,43 @@ class HomeHeader extends StatelessWidget {
               ),
               const SizedBox(width: 10),
 
-              // Notificaciones
-              Stack(
-                children: [
-                  const Icon(
-                    Icons.notifications,
-                    color: Colors.yellow,
-                    size: 30,
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 14,
-                        minHeight: 14,
-                      ),
-                      child: const Text(
-                        '1',
-                        style: TextStyle(color: Colors.white, fontSize: 10),
-                        textAlign: TextAlign.center,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AlertsView()),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    const Icon(
+                      Icons.notifications,
+                      color: Colors
+                          .yellow, // O usa AppColors.btnWarning si tienes uno
+                      size: 30,
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red, // O usa AppColors.btnRed
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 14,
+                          minHeight: 14,
+                        ),
+                        child: const Text(
+                          '1',
+                          style: TextStyle(color: Colors.white, fontSize: 10),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(width: 10),
 
