@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
-// Pantallas de agenda y registrar cita 
+// Pantallas de agenda y registrar cita
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view.dart';
 
@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
 
       case "Gestión de Pacientes":
-         ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Módulo de Pacientes en construcción')),
         );
         break;
@@ -135,7 +135,7 @@ class HomeLayout extends StatelessWidget {
           // Barra de Búsqueda Funcional extraída
           CustomSearchBar(controller: searchController),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
           // Grid de Menú extraído
           Expanded(
@@ -179,8 +179,9 @@ class HomeHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: darkColor, // El color cubre toda la parte superior
-      child: SafeArea( // SafeArea evita que el contenido toque la barra de estado/notch
-        bottom: false, 
+      child: SafeArea(
+        // SafeArea evita que el contenido toque la barra de estado/notch
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           child: Row(
@@ -216,11 +217,15 @@ class HomeHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              
+
               // Notificaciones
               Stack(
                 children: [
-                  const Icon(Icons.notifications, color: Colors.yellow, size: 30),
+                  const Icon(
+                    Icons.notifications,
+                    color: Colors.yellow,
+                    size: 30,
+                  ),
                   Positioned(
                     right: 0,
                     top: 0,
@@ -244,16 +249,18 @@ class HomeHeader extends StatelessWidget {
                 ],
               ),
               const SizedBox(width: 10),
-              
+
               // Botón Logout (Con lógica de salida)
               GestureDetector(
                 onTap: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
                     (route) => false, // Borra el historial para no volver atrás
                   );
-                }, 
+                },
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.blueGrey,
@@ -421,11 +428,12 @@ class MenuGrid extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       child: GridView.builder(
+        padding: const EdgeInsets.only(top: 0, bottom: 20),
         itemCount: menuOptions.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 20,
-          mainAxisSpacing: 15,
+          mainAxisSpacing: 10,
           childAspectRatio: 1.5,
         ),
         itemBuilder: (context, index) {
