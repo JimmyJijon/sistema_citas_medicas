@@ -5,7 +5,6 @@ import 'package:sistema_citas_medicas/features/citas/screens/detalle_cita_view.d
 import 'package:sistema_citas_medicas/features/citas/screens/marcar_cita_view.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/reagendar_cita_view.dart'; 
 import '../widgets/app_header.dart';
-// Importamos nuestros nuevos widgets modulares
 import '../widgets/agenda_widgets/agenda_filters.dart';
 import '../widgets/agenda_widgets/agenda_appointment_card.dart';
 
@@ -61,38 +60,37 @@ class _AgendaViewState extends State<AgendaView> {
         children: [
           // 1. Header
           const AppHeader(title: "Inicio / Agenda"),
-          // 2. BOTÓN VOLVER 
-          Container(
-            width: double.infinity,
+          
+          // 2. BOTÓN VOLVER (Estilo Verde - Reemplazado)
+          Padding(
             padding: const EdgeInsets.only(left: 20, top: 15, bottom: 5),
-            alignment: Alignment.centerLeft, // Alineado a la izquierda
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.lightBlueAccent, // Fondo blanco para que resalte el celeste
-                foregroundColor: Colors.black,  // Color Celeste para el texto/icono
-                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20), // Bordes redondeados consistentes
-                ),
-                elevation: 3, // Sombra suave
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              // Usamos Row para agregar una flechita junto al texto
-              child: const Row(
-                mainAxisSize: MainAxisSize.min, // El botón se ajusta al contenido
-                children: [
-                  Icon(Icons.arrow_back_ios_new, size: 16),
-                  SizedBox(width: 8),
-                  Text(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 100,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.btnGreen, // Color verde del tema
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                       BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
                     "Volver",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16
+                      color: Colors.black, // Texto negro
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -184,32 +182,30 @@ class _AgendaViewState extends State<AgendaView> {
 }
 
 void _manejarNavegacion(BuildContext context, String accion) {
-  // Asegúrate que estos textos ("Completar", "Cancelar") sean IDÉNTICOS 
-  // a los que pusiste en el onAction("...") dentro de tu Widget.
-  
+  // Manejo de navegación según la acción
   switch (accion) {
-    case "completar": //para el botón verde
+    case "completar":
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MarcarCitaView()),
       );
       break;
 
-    case "cancelar": // Para el botón de la X roja
+    case "cancelar":
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CancelarCitaView()),
       );
       break;
 
-    case "reagendar": // Para el botón del calendario
+    case "reagendar":
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ReagendarCitaView()),
       );
       break;
       
-    case "ver": // Para el botón del ojo marrón
+    case "ver":
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const DetalleCitaView()),
