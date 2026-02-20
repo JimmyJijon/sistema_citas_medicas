@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/pacientes/models/paciente_model.dart';
+import 'package:sistema_citas_medicas/features/pacientes/widgets/campo_formulario_widget.dart';
 
 class PacientesListScreen extends StatelessWidget {
   const PacientesListScreen({super.key});
@@ -15,7 +16,10 @@ class PacientesListScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
+          // --- HEADER (Estilo Usuarios) ---
           _buildHeader(),
+
+          // --- BOTÓN VOLVER ---
           Padding(
             padding: const EdgeInsets.only(left: 20, top: 10),
             child: Align(
@@ -23,7 +27,10 @@ class PacientesListScreen extends StatelessWidget {
               child: _buildBotonVolver(context),
             ),
           ),
+
           const SizedBox(height: 10),
+
+          // --- CONTENEDOR BLANCO REDONDEADO ---
           Expanded(
             child: Container(
               width: double.infinity,
@@ -41,12 +48,16 @@ class PacientesListScreen extends StatelessWidget {
                   children: [
                     _buildSectionTitle('Gestión de Pacientes'),
                     const SizedBox(height: 15),
+
                     _buildBotonNuevo(context),
                     const SizedBox(height: 20),
-                    _buildSearchBar(),
+
+                    _buildSearchBar(vm),
                     const SizedBox(height: 20),
+
+                    // --- LISTADO DE TARJETAS ---
                     vm.pacientes.isEmpty
-                        ? const Text('No hay pacientes registrados')
+                        ? const Center(child: Text('No hay pacientes registrados'))
                         : Column(
                             children: vm.pacientes.asMap().entries.map((entry) {
                               return _buildPacienteCard(context, entry.value, entry.key, vm);
@@ -62,7 +73,7 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  // --- COMPONENTES DE DISEÑO ---
+  // --- COMPONENTES DE INTERFAZ ---
 
   Widget _buildHeader() {
     return Container(
@@ -126,7 +137,7 @@ class PacientesListScreen extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () => _dialogoFormulario(context),
+        onPressed: () => _mostrarDialogoFormulario(context),
         icon: const Icon(Icons.add, color: Colors.black),
         label: const Text('Nuevo Paciente', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         style: ElevatedButton.styleFrom(
@@ -138,10 +149,13 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(PacientesViewModel vm) {
     return TextField(
+      // ESTA ES LA LÍNEA QUE DEBES AGREGAR:
+      onChanged: (value) => vm.filtrarPacientes(value), 
+      
       decoration: InputDecoration(
-        hintText: 'Buscar paciente...',
+        hintText: 'Buscar por nombre o cédula...',
         prefixIcon: const Icon(Icons.search),
         filled: true,
         fillColor: Colors.grey[100],
@@ -181,7 +195,7 @@ class PacientesListScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.blueGrey),
-            onPressed: () => _dialogoFormulario(context, paciente: paciente, index: index),
+            onPressed: () => _mostrarDialogoFormulario(context, paciente: paciente, index: index),
           ),
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.redAccent),
@@ -192,94 +206,123 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  // --- DIÁLOGO PARA CREAR Y EDITAR ---
+  // --- LÓGICA DE FORMULARIO Y VALIDACIONES ---
 
-  void _dialogoFormulario(BuildContext context, {PacienteModel? paciente, int? index}) {
+  void _mostrarDialogoFormulario(BuildContext context, {PacienteModel? paciente, int? index}) {
     final bool esEdicion = paciente != null;
-    final TextEditingController nombreCtrl = TextEditingController(text: paciente?.nombre);
-    final TextEditingController cedulaCtrl = TextEditingController(text: paciente?.cedula);
+    
+    // Controladores para capturar texto y validar
+    final nombreCtrl = TextEditingController(text: paciente?.nombre);
+    final cedulaCtrl = TextEditingController(text: paciente?.cedula);
+    final telefonoCtrl = TextEditingController(text: paciente?.telefono);
+    String estadoSeleccionado = paciente?.estado ?? 'Activo';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: Text(
-          esEdicion ? 'Editar Paciente' : 'Nuevo Paciente',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _campoTexto('Nombres', 'Ej: Juan Perez', nombreCtrl),
-            const SizedBox(height: 15),
-            _campoTexto('Cédula', 'Ej: 09XXXXXXXX', cedulaCtrl),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancelar', style: TextStyle(color: AppColors.btnRed, fontWeight: FontWeight.bold)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+          title: Text(
+            esEdicion ? 'Editar Paciente' : 'Nuevo Paciente',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CampoFormulario(
+                  label: 'Nombres', 
+                  hint: 'Ej: Jhon Doe', 
+                  controller: nombreCtrl,
+                  soloLetras: true, // Validación activa
                 ),
-              ),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.btnGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                const SizedBox(height: 10),
+                CampoFormulario(
+                  label: 'Cédula', 
+                  hint: 'Ej: 0102030405', 
+                  controller: cedulaCtrl,
+                  soloNumeros: true, // Validación activa
+                ),
+                const SizedBox(height: 10),
+                CampoFormulario(
+                  label: 'Teléfono', 
+                  hint: 'Ej: 0123456789', 
+                  controller: telefonoCtrl,
+                  soloNumeros: true, // Validación activa
+                ),
+                const SizedBox(height: 15),
+                
+                // Selector de Estado
+                Row(
+                  children: [
+                    const Text("Estado: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 10),
+                    DropdownButton<String>(
+                      value: estadoSeleccionado,
+                      items: ['Activo', 'Inactivo'].map((String value) {
+                        return DropdownMenuItem<String>(value: value, child: Text(value));
+                      }).toList(),
+                      onChanged: (nuevo) => setState(() => estadoSeleccionado = nuevo!),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancelar', style: TextStyle(color: AppColors.btnRed, fontWeight: FontWeight.bold)),
                   ),
-                  onPressed: () {
-                    if (nombreCtrl.text.isNotEmpty && cedulaCtrl.text.isNotEmpty) {
+                ),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.btnGreen,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    onPressed: () {
+                      // VALIDACIÓN: Todos los campos son obligatorios
+                      if (nombreCtrl.text.trim().isEmpty || 
+                          cedulaCtrl.text.trim().isEmpty || 
+                          telefonoCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Por favor, llene todos los campos obligatorios')),
+                        );
+                        return;
+                      }
+
                       final p = PacienteModel(
                         nombre: nombreCtrl.text,
                         cedula: cedulaCtrl.text,
-                        telefono: paciente?.telefono ?? 'S/N',
-                        estado: paciente?.estado ?? 'Activo',
+                        telefono: telefonoCtrl.text,
+                        estado: estadoSeleccionado,
                       );
                       
+                      final vm = Provider.of<PacientesViewModel>(context, listen: false);
                       if (esEdicion) {
-                        Provider.of<PacientesViewModel>(context, listen: false).editarPaciente(index!, p);
+                        vm.editarPaciente(index!, p);
                       } else {
-                        Provider.of<PacientesViewModel>(context, listen: false).agregarPaciente(p);
+                        vm.agregarPaciente(p);
                       }
+                      
                       Navigator.pop(context);
-                    }
-                  },
-                  child: Text(esEdicion ? 'Actualizar' : 'Guardar', 
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    },
+                    child: Text(esEdicion ? 'Actualizar' : 'Guardar', 
+                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _campoTexto(String label, String hint, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-        const SizedBox(height: 5),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              ],
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
