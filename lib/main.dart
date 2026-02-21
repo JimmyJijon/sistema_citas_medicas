@@ -5,6 +5,9 @@ import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
 import 'package:sistema_citas_medicas/features/horarios/screens/horario_screen.dart';
 import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_screen.dart';
+import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart';
+import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
+
 
 void main() {
   runApp(const MyApp());

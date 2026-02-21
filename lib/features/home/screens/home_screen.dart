@@ -7,6 +7,11 @@ import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view
 import 'package:sistema_citas_medicas/features/horarios/screens/horario_screen.dart';
 import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_screen.dart';
 
+import 'package:provider/provider.dart'; // Soluciona el error de ChangeNotifierProvider
+import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart'; // Soluciona el error de PacientesViewModel
+import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart'; // Soluciona el error de PacientesListScreen
+
+
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
 // ==========================================
@@ -72,7 +77,18 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(builder: (context) => const HorarioScreen()),
         );
         break;
-      
+
+      case "Gestión de Pacientes": 
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChangeNotifierProvider(
+              create: (_) => PacientesViewModel(), // Creamos el almacén solo para tu pantalla
+              child: const PacientesListScreen(),
+            ),
+          ),
+        );
+  break;
 
       default:
         ScaffoldMessenger.of(context).showSnackBar(
