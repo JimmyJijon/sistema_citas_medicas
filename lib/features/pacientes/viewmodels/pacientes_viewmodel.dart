@@ -4,24 +4,8 @@ import '../models/paciente_model.dart';
 class PacientesViewModel extends ChangeNotifier {
   // Lista maestra de datos
   final List<PacienteModel> _pacientes = [
-    PacienteModel(
-      idPaciente: 1, // Le asignamos un ID de prueba
-      nombres: 'Jimmy', // Separamos el nombre
-      apellidos: 'Jijon', // Separamos el apellido
-      cedula: '0959734154',
-      telefono: '0999999999',
-      correo: 'jimmy@correo.com', // Correo de prueba
-      estado: 'Activo',
-    ),
-    PacienteModel(
-      idPaciente: 2, // Le asignamos otro ID
-      nombres: 'Sofia', // Separamos el nombre
-      apellidos: 'Garcia', // Separamos el apellido
-      cedula: '0959118154',
-      telefono: '0999999999',
-      correo: 'sofia@correo.com', // Correo de prueba
-      estado: 'Activo',
-    ),
+    PacienteModel(nombre: 'Jimmy Jijon', cedula: '0959734154', telefono: '0999999999', estado: 'Activo'),
+    PacienteModel(nombre: 'Sofia Garcia', cedula: '0959118154', telefono: '0999999999', estado: 'Activo'),
   ];
 
   // Variable para almacenar lo que el usuario escribe
@@ -32,12 +16,12 @@ class PacientesViewModel extends ChangeNotifier {
     if (_filtroBusqueda.isEmpty) {
       return _pacientes;
     }
-
+    
     return _pacientes.where((paciente) {
-      final nombre = paciente.nombres.toLowerCase();
+      final nombre = paciente.nombre.toLowerCase();
       final cedula = paciente.cedula.toLowerCase();
       final query = _filtroBusqueda.toLowerCase();
-
+      
       return nombre.contains(query) || cedula.contains(query);
     }).toList();
   }
@@ -58,7 +42,7 @@ class PacientesViewModel extends ChangeNotifier {
     // por si la lista está filtrada actualmente.
     final pacienteAEditar = pacientes[index];
     final indiceReal = _pacientes.indexOf(pacienteAEditar);
-
+    
     if (indiceReal != -1) {
       _pacientes[indiceReal] = actualizado;
       notifyListeners();

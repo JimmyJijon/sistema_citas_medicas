@@ -57,17 +57,10 @@ class PacientesListScreen extends StatelessWidget {
 
                     // --- LISTADO DE TARJETAS ---
                     vm.pacientes.isEmpty
-                        ? const Center(
-                            child: Text('No hay pacientes registrados'),
-                          )
+                        ? const Center(child: Text('No hay pacientes registrados'))
                         : Column(
                             children: vm.pacientes.asMap().entries.map((entry) {
-                              return _buildPacienteCard(
-                                context,
-                                entry.value,
-                                entry.key,
-                                vm,
-                              );
+                              return _buildPacienteCard(context, entry.value, entry.key, vm);
                             }).toList(),
                           ),
                   ],
@@ -91,10 +84,7 @@ class PacientesListScreen extends StatelessWidget {
           CircleAvatar(
             backgroundColor: Colors.grey[400],
             radius: 20,
-            child: const Text(
-              'logo',
-              style: TextStyle(fontSize: 10, color: Colors.black),
-            ),
+            child: const Text('logo', style: TextStyle(fontSize: 10, color: Colors.black)),
           ),
           const SizedBox(width: 15),
           Expanded(
@@ -123,10 +113,7 @@ class PacientesListScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 0,
       ),
-      child: const Text(
-        'Volver',
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-      ),
+      child: const Text('Volver', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -152,16 +139,11 @@ class PacientesListScreen extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: () => _mostrarDialogoFormulario(context),
         icon: const Icon(Icons.add, color: Colors.black),
-        label: const Text(
-          'Nuevo Paciente',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        label: const Text('Nuevo Paciente', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.btnGreen,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
       ),
     );
@@ -170,8 +152,8 @@ class PacientesListScreen extends StatelessWidget {
   Widget _buildSearchBar(PacientesViewModel vm) {
     return TextField(
       // ESTA ES LA LÍNEA QUE DEBES AGREGAR:
-      onChanged: (value) => vm.filtrarPacientes(value),
-
+      onChanged: (value) => vm.filtrarPacientes(value), 
+      
       decoration: InputDecoration(
         hintText: 'Buscar por nombre o cédula...',
         prefixIcon: const Icon(Icons.search),
@@ -185,12 +167,7 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPacienteCard(
-    BuildContext context,
-    PacienteModel paciente,
-    int index,
-    PacientesViewModel vm,
-  ) {
+  Widget _buildPacienteCard(BuildContext context, PacienteModel paciente, int index, PacientesViewModel vm) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -203,34 +180,22 @@ class PacientesListScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
-            child: Text(
-              paciente.nombres[0],
-              style: const TextStyle(color: Colors.black),
-            ),
+            child: Text(paciente.nombre[0], style: const TextStyle(color: Colors.black)),
           ),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  paciente.nombres,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '${paciente.cedula} • ${paciente.estado}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
+                Text(paciente.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('${paciente.cedula} • ${paciente.estado}', 
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
               ],
             ),
           ),
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.blueGrey),
-            onPressed: () => _mostrarDialogoFormulario(
-              context,
-              paciente: paciente,
-              index: index,
-            ),
+            onPressed: () => _mostrarDialogoFormulario(context, paciente: paciente, index: index),
           ),
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.redAccent),
@@ -243,15 +208,11 @@ class PacientesListScreen extends StatelessWidget {
 
   // --- LÓGICA DE FORMULARIO Y VALIDACIONES ---
 
-  void _mostrarDialogoFormulario(
-    BuildContext context, {
-    PacienteModel? paciente,
-    int? index,
-  }) {
+  void _mostrarDialogoFormulario(BuildContext context, {PacienteModel? paciente, int? index}) {
     final bool esEdicion = paciente != null;
-
+    
     // Controladores para capturar texto y validar
-    final nombreCtrl = TextEditingController(text: paciente?.nombres);
+    final nombreCtrl = TextEditingController(text: paciente?.nombre);
     final cedulaCtrl = TextEditingController(text: paciente?.cedula);
     final telefonoCtrl = TextEditingController(text: paciente?.telefono);
     String estadoSeleccionado = paciente?.estado ?? 'Activo';
@@ -261,9 +222,7 @@ class PacientesListScreen extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
           title: Text(
             esEdicion ? 'Editar Paciente' : 'Nuevo Paciente',
             textAlign: TextAlign.center,
@@ -274,123 +233,89 @@ class PacientesListScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CampoFormulario(
-                  label: 'Nombres',
-                  hint: 'Ej: Jhon Doe',
+                  label: 'Nombres', 
+                  hint: 'Ej: Jhon Doe', 
                   controller: nombreCtrl,
                   soloLetras: true, // Validación activa
                 ),
                 const SizedBox(height: 10),
                 CampoFormulario(
-                  label: 'Cédula',
-                  hint: 'Ej: 0102030405',
+                  label: 'Cédula', 
+                  hint: 'Ej: 0102030405', 
                   controller: cedulaCtrl,
                   soloNumeros: true, // Validación activa
                 ),
                 const SizedBox(height: 10),
                 CampoFormulario(
-                  label: 'Teléfono',
-                  hint: 'Ej: 0123456789',
+                  label: 'Teléfono', 
+                  hint: 'Ej: 0123456789', 
                   controller: telefonoCtrl,
                   soloNumeros: true, // Validación activa
                 ),
                 const SizedBox(height: 15),
-
+                
                 // Selector de Estado
                 Row(
                   children: [
-                    const Text(
-                      "Estado: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    const Text("Estado: ", style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(width: 10),
                     DropdownButton<String>(
                       value: estadoSeleccionado,
                       items: ['Activo', 'Inactivo'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
+                        return DropdownMenuItem<String>(value: value, child: Text(value));
                       }).toList(),
-                      onChanged: (nuevo) =>
-                          setState(() => estadoSeleccionado = nuevo!),
+                      onChanged: (nuevo) => setState(() => estadoSeleccionado = nuevo!),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          actionsPadding: const EdgeInsets.only(
-            bottom: 20,
-            left: 20,
-            right: 20,
-          ),
+          actionsPadding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
           actions: [
             Row(
               children: [
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancelar',
-                      style: TextStyle(
-                        color: AppColors.btnRed,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text('Cancelar', style: TextStyle(color: AppColors.btnRed, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.btnGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
                     onPressed: () {
                       // VALIDACIÓN: Todos los campos son obligatorios
-                      if (nombreCtrl.text.trim().isEmpty ||
-                          cedulaCtrl.text.trim().isEmpty ||
+                      if (nombreCtrl.text.trim().isEmpty || 
+                          cedulaCtrl.text.trim().isEmpty || 
                           telefonoCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Por favor, llene todos los campos obligatorios',
-                            ),
-                          ),
+                          const SnackBar(content: Text('Por favor, llene todos los campos obligatorios')),
                         );
                         return;
                       }
 
                       final p = PacienteModel(
-                        idPaciente: 0,
+                        nombre: nombreCtrl.text,
                         cedula: cedulaCtrl.text,
-                        nombres: nombreCtrl.text,
-                        apellidos: '',
                         telefono: telefonoCtrl.text,
-                        correo: '',
                         estado: estadoSeleccionado,
                       );
-
-                      final vm = Provider.of<PacientesViewModel>(
-                        context,
-                        listen: false,
-                      );
+                      
+                      final vm = Provider.of<PacientesViewModel>(context, listen: false);
                       if (esEdicion) {
                         vm.editarPaciente(index!, p);
                       } else {
                         vm.agregarPaciente(p);
                       }
-
+                      
                       Navigator.pop(context);
                     },
-                    child: Text(
-                      esEdicion ? 'Actualizar' : 'Guardar',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text(esEdicion ? 'Actualizar' : 'Guardar', 
+                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
