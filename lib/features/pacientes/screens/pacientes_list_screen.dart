@@ -10,13 +10,13 @@ class PacientesListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = Provider.of<PacientesViewModel>(context);
+    final vm = context.watch<PacientesViewModel>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // --- HEADER (Estilo Usuarios) ---
+          // --- HEADER ---
           _buildHeader(),
 
           // --- BOTÓN VOLVER ---
@@ -42,37 +42,39 @@ class PacientesListScreen extends StatelessWidget {
                   topRight: Radius.circular(30),
                 ),
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildSectionTitle('Gestión de Pacientes'),
-                    const SizedBox(height: 15),
+              child: vm.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          _buildSectionTitle('Gestión de Pacientes'),
+                          const SizedBox(height: 15),
 
-                    _buildBotonNuevo(context),
-                    const SizedBox(height: 20),
+                          // Pasamos context y vm correctamente
+                          _buildBotonNuevo(context, vm),
+                          const SizedBox(height: 20),
 
-                    _buildSearchBar(vm),
-                    const SizedBox(height: 20),
+                          _buildSearchBar(vm),
+                          const SizedBox(height: 20),
 
-                    // --- LISTADO DE TARJETAS ---
-                    vm.pacientes.isEmpty
-                        ? const Center(
-                            child: Text('No hay pacientes registrados'),
-                          )
-                        : Column(
-                            children: vm.pacientes.asMap().entries.map((entry) {
-                              return _buildPacienteCard(
-                                context,
-                                entry.value,
-                                entry.key,
-                                vm,
-                              );
-                            }).toList(),
-                          ),
-                  ],
-                ),
-              ),
+                          // --- LISTADO DE TARJETAS ---
+                          vm.pacientes.isEmpty
+                              ? const Center(
+                                  child: Text('No hay pacientes registrados'),
+                                )
+                              : Column(
+                                  children: vm.pacientes.map((paciente) {
+                                    return _buildPacienteCard(
+                                      context,
+                                      paciente,
+                                      vm,
+                                    );
+                                  }).toList(),
+                                ),
+                        ],
+                      ),
+                    ),
             ),
           ),
         ],
@@ -146,11 +148,12 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBotonNuevo(BuildContext context) {
+  // Función corregida: Ahora recibe context y vm
+  Widget _buildBotonNuevo(BuildContext context, PacientesViewModel vm) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () => _mostrarDialogoFormulario(context),
+        onPressed: () => _mostrarDialogoFormulario(context, vm),
         icon: const Icon(Icons.add, color: Colors.black),
         label: const Text(
           'Nuevo Paciente',
@@ -169,9 +172,7 @@ class PacientesListScreen extends StatelessWidget {
 
   Widget _buildSearchBar(PacientesViewModel vm) {
     return TextField(
-      // ESTA ES LA LÍNEA QUE DEBES AGREGAR:
       onChanged: (value) => vm.filtrarPacientes(value),
-
       decoration: InputDecoration(
         hintText: 'Buscar por nombre o cédula...',
         prefixIcon: const Icon(Icons.search),
@@ -188,7 +189,6 @@ class PacientesListScreen extends StatelessWidget {
   Widget _buildPacienteCard(
     BuildContext context,
     PacienteModel paciente,
-    int index,
     PacientesViewModel vm,
   ) {
     return Container(
@@ -204,7 +204,7 @@ class PacientesListScreen extends StatelessWidget {
           CircleAvatar(
             backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
             child: Text(
-              paciente.nombres[0],
+              paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
               style: const TextStyle(color: Colors.black),
             ),
           ),
@@ -214,7 +214,7 @@ class PacientesListScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  paciente.nombres,
+                  '${paciente.nombres} ${paciente.apellidos}'.trim(),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
@@ -228,13 +228,17 @@ class PacientesListScreen extends StatelessWidget {
             icon: const Icon(Icons.edit, color: Colors.blueGrey),
             onPressed: () => _mostrarDialogoFormulario(
               context,
+              vm,
               paciente: paciente,
-              index: index,
             ),
           ),
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.redAccent),
-            onPressed: () => vm.eliminarPaciente(index),
+            onPressed: () {
+              if (paciente.idPaciente != null) {
+                vm.eliminarPaciente(paciente.idPaciente!);
+              }
+            },
           ),
         ],
       ),
@@ -243,17 +247,19 @@ class PacientesListScreen extends StatelessWidget {
 
   // --- LÓGICA DE FORMULARIO Y VALIDACIONES ---
 
+  // Función corregida: Ahora recibe context y vm en la definición
   void _mostrarDialogoFormulario(
-    BuildContext context, {
+    BuildContext context,
+    PacientesViewModel vm, {
     PacienteModel? paciente,
-    int? index,
   }) {
     final bool esEdicion = paciente != null;
 
-    // Controladores para capturar texto y validar
     final nombreCtrl = TextEditingController(text: paciente?.nombres);
+    final apellidosCtrl = TextEditingController(text: paciente?.apellidos);
     final cedulaCtrl = TextEditingController(text: paciente?.cedula);
     final telefonoCtrl = TextEditingController(text: paciente?.telefono);
+    final correoCtrl = TextEditingController(text: paciente?.correo);
     String estadoSeleccionado = paciente?.estado ?? 'Activo';
 
     showDialog(
@@ -275,23 +281,36 @@ class PacientesListScreen extends StatelessWidget {
               children: [
                 CampoFormulario(
                   label: 'Nombres',
-                  hint: 'Ej: Jhon Doe',
+                  hint: 'Ej: Juan Pablo',
                   controller: nombreCtrl,
-                  soloLetras: true, // Validación activa
+                  soloLetras: true,
+                ),
+                const SizedBox(height: 10),
+                CampoFormulario(
+                  label: 'Apellidos',
+                  hint: 'Ej: Pérez Gómez',
+                  controller: apellidosCtrl,
+                  soloLetras: true,
                 ),
                 const SizedBox(height: 10),
                 CampoFormulario(
                   label: 'Cédula',
                   hint: 'Ej: 0102030405',
                   controller: cedulaCtrl,
-                  soloNumeros: true, // Validación activa
+                  soloNumeros: true,
                 ),
                 const SizedBox(height: 10),
                 CampoFormulario(
                   label: 'Teléfono',
-                  hint: 'Ej: 0123456789',
+                  hint: 'Ej: 0991234567',
                   controller: telefonoCtrl,
-                  soloNumeros: true, // Validación activa
+                  soloNumeros: true,
+                ),
+                const SizedBox(height: 10),
+                CampoFormulario(
+                  label: 'Correo',
+                  hint: 'Ej: juan@email.com',
+                  controller: correoCtrl,
                 ),
                 const SizedBox(height: 15),
 
@@ -348,14 +367,14 @@ class PacientesListScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // VALIDACIÓN: Todos los campos son obligatorios
                       if (nombreCtrl.text.trim().isEmpty ||
+                          apellidosCtrl.text.trim().isEmpty ||
                           cedulaCtrl.text.trim().isEmpty ||
                           telefonoCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Por favor, llene todos los campos obligatorios',
+                              'Por favor, llene todos los campos obligatorios.',
                             ),
                           ),
                         );
@@ -363,21 +382,17 @@ class PacientesListScreen extends StatelessWidget {
                       }
 
                       final p = PacienteModel(
-                        idPaciente: 0,
+                        idPaciente: paciente?.idPaciente,
                         cedula: cedulaCtrl.text,
                         nombres: nombreCtrl.text,
-                        apellidos: '',
+                        apellidos: apellidosCtrl.text,
                         telefono: telefonoCtrl.text,
-                        correo: '',
+                        correo: correoCtrl.text,
                         estado: estadoSeleccionado,
                       );
-
-                      final vm = Provider.of<PacientesViewModel>(
-                        context,
-                        listen: false,
-                      );
+                      
                       if (esEdicion) {
-                        vm.editarPaciente(index!, p);
+                        vm.editarPaciente(p);
                       } else {
                         vm.agregarPaciente(p);
                       }
