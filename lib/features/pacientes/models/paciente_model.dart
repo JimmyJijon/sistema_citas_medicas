@@ -5,7 +5,7 @@ class PacienteModel {
   final String apellidos;
   final String? telefono; // Es opcional (?) porque en la BD no tiene "NOT NULL"
   final String? correo;   // Es opcional (?) porque en la BD no tiene "NOT NULL"
-  final String estado;    // Obligatorio, sí tiene "NOT NULL"
+  String estado;    // Obligatorio, sí tiene "NOT NULL"
 
   PacienteModel({
     this.idPaciente,
@@ -14,7 +14,7 @@ class PacienteModel {
     required this.apellidos,
     this.telefono,
     this.correo,
-    required this.estado,
+    this.estado = 'Activo'
   });
 
   // Convierte lo que escupe SQLite a un objeto en Flutter

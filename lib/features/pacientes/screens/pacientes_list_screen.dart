@@ -51,7 +51,6 @@ class PacientesListScreen extends StatelessWidget {
                           _buildSectionTitle('Gestión de Pacientes'),
                           const SizedBox(height: 15),
 
-                          // Pasamos context y vm correctamente
                           _buildBotonNuevo(context, vm),
                           const SizedBox(height: 20),
 
@@ -148,7 +147,6 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  // Función corregida: Ahora recibe context y vm
   Widget _buildBotonNuevo(BuildContext context, PacientesViewModel vm) {
     return SizedBox(
       width: double.infinity,
@@ -191,63 +189,76 @@ class PacientesListScreen extends StatelessWidget {
     PacienteModel paciente,
     PacientesViewModel vm,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
-            child: Text(
-              paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
-              style: const TextStyle(color: Colors.black),
+    // Verificamos si el paciente está inactivo
+    final bool esInactivo = paciente.estado == 'Inactivo';
+
+    // Usamos Opacity para dar el efecto de desvanecido
+    return Opacity(
+      opacity: esInactivo ? 0.5 : 1.0, // 50% de opacidad si es inactivo
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: esInactivo ? Colors.grey.shade100 : Colors.white, // Fondo un poco más gris si es inactivo
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
+              child: Text(
+                paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
+                style: const TextStyle(color: Colors.black),
+              ),
             ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${paciente.nombres} ${paciente.apellidos}'.trim(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '${paciente.cedula} • ${paciente.estado}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${paciente.nombres} ${paciente.apellidos}'.trim(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      decoration: esInactivo ? TextDecoration.lineThrough : null, // Opcional: tachar el nombre
+                    ),
+                  ),
+                  Text(
+                    '${paciente.cedula} • ${paciente.estado}',
+                    style: TextStyle(
+                      color: esInactivo ? Colors.redAccent : Colors.grey[600], 
+                      fontSize: 12,
+                      fontWeight: esInactivo ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blueGrey),
-            onPressed: () => _mostrarDialogoFormulario(
-              context,
-              vm,
-              paciente: paciente,
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.blueGrey),
+              onPressed: () => _mostrarDialogoFormulario(
+                context,
+                vm,
+                paciente: paciente,
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.redAccent),
-            onPressed: () {
-              if (paciente.idPaciente != null) {
-                vm.eliminarPaciente(paciente.idPaciente!);
-              }
-            },
-          ),
-        ],
+            // Solo mostramos el botón de eliminar si el paciente ESTÁ ACTIVO
+            if (!esInactivo)
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                onPressed: () {
+                  _mostrarDialogoConfirmacion(context, paciente, vm);
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
 
   // --- LÓGICA DE FORMULARIO Y VALIDACIONES ---
 
-  // Función corregida: Ahora recibe context y vm en la definición
   void _mostrarDialogoFormulario(
     BuildContext context,
     PacientesViewModel vm, {
@@ -260,7 +271,9 @@ class PacientesListScreen extends StatelessWidget {
     final cedulaCtrl = TextEditingController(text: paciente?.cedula);
     final telefonoCtrl = TextEditingController(text: paciente?.telefono);
     final correoCtrl = TextEditingController(text: paciente?.correo);
-    String estadoSeleccionado = paciente?.estado ?? 'Activo';
+    
+    // Guardamos el estado actual si es edición, o asignamos 'Activo' por defecto si es nuevo
+    final String estadoSeleccionado = paciente?.estado ?? 'Activo';
 
     showDialog(
       context: context,
@@ -312,29 +325,7 @@ class PacientesListScreen extends StatelessWidget {
                   hint: 'Ej: juan@email.com',
                   controller: correoCtrl,
                 ),
-                const SizedBox(height: 15),
-
-                // Selector de Estado
-                Row(
-                  children: [
-                    const Text(
-                      "Estado: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 10),
-                    DropdownButton<String>(
-                      value: estadoSeleccionado,
-                      items: ['Activo', 'Inactivo'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (nuevo) =>
-                          setState(() => estadoSeleccionado = nuevo!),
-                    ),
-                  ],
-                ),
+                // Eliminamos la fila del DropdownButton de Estado. El usuario ya no lo ve.
               ],
             ),
           ),
@@ -388,7 +379,7 @@ class PacientesListScreen extends StatelessWidget {
                         apellidos: apellidosCtrl.text,
                         telefono: telefonoCtrl.text,
                         correo: correoCtrl.text,
-                        estado: estadoSeleccionado,
+                        estado: estadoSeleccionado, // Se asigna el estado silenciosamente
                       );
                       
                       if (esEdicion) {
@@ -412,6 +403,82 @@ class PacientesListScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // --- AVISO DE CONFIRMACIÓN PARA ELIMINAR ---
+  void _mostrarDialogoConfirmacion(
+    BuildContext context,
+    PacienteModel paciente,
+    PacientesViewModel vm,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, 
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25),
+        ),
+        title: const Text(
+          'Eliminar Paciente',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar a ${paciente.nombres} ${paciente.apellidos}?\n\nEsta acción no lo borrará por completo, solo lo marcará como inactivo.',
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context), 
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: AppColors.btnRed,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent, 
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: () {
+                    vm.eliminarPaciente(paciente);
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Paciente eliminado correctamente'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Eliminar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/paciente_model.dart';
 import '../repositories/pacientes_repository.dart'; 
+
 class PacientesViewModel extends ChangeNotifier {
   // 1. Instanciamos el repositorio que habla con SQLite
   final PacientesRepository _repository = PacientesRepository();
@@ -23,7 +24,7 @@ class PacientesViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Le pedimos al repositorio que traiga todo de SQLite
+    // Traemos absolutamente todos los pacientes (activos e inactivos)
     _pacientes = await _repository.getPacientes();
 
     _isLoading = false;
@@ -59,18 +60,22 @@ class PacientesViewModel extends ChangeNotifier {
   }
 
   // --- UPDATE (Editar en Base de Datos) ---
-  // CAMBIO CLAVE: Ya no usamos el "index" de la lista. 
-  // Ahora mandamos el objeto Paciente entero con su ID original.
   Future<void> editarPaciente(PacienteModel actualizado) async {
     await _repository.updatePaciente(actualizado);
     await cargarPacientes();
   }
 
-  // --- DELETE (Eliminar de Base de Datos) ---
-  // CAMBIO CLAVE: Ya no borramos por el "index" de la vista.
-  // Borramos usando el ID único de la base de datos.
-  Future<void> eliminarPaciente(int idPaciente) async {
-    await _repository.deletePaciente(idPaciente);
+  // --- DELETE LOGICO (Inactivar en Base de Datos) ---
+  // CAMBIO CLAVE: Ahora recibimos el PacienteModel completo.
+  // Ya no usamos deletePaciente, usamos updatePaciente.
+  Future<void> eliminarPaciente(PacienteModel paciente) async {
+    // 1. Cambiamos el estado del paciente a 'Inactivo'
+    paciente.estado = 'Inactivo';
+    
+    // 2. Actualizamos el registro en la base de datos
+    await _repository.updatePaciente(paciente);
+    
+    // 3. Recargamos la lista (como cargarPacientes solo trae los 'Activo', este desaparecerá de la vista)
     await cargarPacientes();
   }
 }
