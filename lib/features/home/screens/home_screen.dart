@@ -166,19 +166,6 @@ class HomeLayout extends StatelessWidget {
               rolUsuario: userData['rol'] ?? 'Doctor',
             ),
           ),
-          Container(
-            width: double.infinity,
-            color: AppColors.darkTopBar,
-            padding: const EdgeInsets.all(15),
-            child: const Text(
-              "Footer",
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'Courier',
-                fontSize: 18,
-              ),
-            ),
-          ),
         ],
       ),
     );
