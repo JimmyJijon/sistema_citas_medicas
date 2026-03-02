@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// Importa tus rutas correspondientes
 import 'package:sistema_citas_medicas/features/alertas/screens/alerts_view.dart';
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
@@ -11,10 +10,12 @@ import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_sc
 import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart';
 import 'package:sistema_citas_medicas/features/home/viewmodels/home_viewmodel.dart';
+import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
 // ==========================================
+
 class HomeScreen extends StatefulWidget {
   final int idUsuario;
 
@@ -98,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, _) {
         if (_viewModel.isLoading) {
           return const Scaffold(
-            backgroundColor: Color(0xFF95AAB4),
+            backgroundColor: AppColors.altBackground,
             body: Center(child: CircularProgressIndicator(color: Colors.white)),
           );
         }
@@ -133,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
 // ==========================================
 // 2. LAYOUT PRINCIPAL (DISEÑO ESTRUCTURAL)
 // ==========================================
+
 class HomeLayout extends StatelessWidget {
   final Map<String, String> userData;
   final TextEditingController searchController;
@@ -147,24 +149,18 @@ class HomeLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor = const Color(0xFF95AAB4);
-    final Color darkColor = const Color(0xFF464541);
-    final Color cardColor = const Color(0xFFE6E6E1);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.altBackground,
       body: Column(
         children: [
-          // Header modificado (ahora es StatefulWidget interno)
-          HomeHeaderWidget(darkColor: darkColor),
+          const HomeHeaderWidget(),
           const SizedBox(height: 15),
-          UserCard(userData: userData, cardColor: cardColor),
+          UserCard(userData: userData),
           const SizedBox(height: 15),
           CustomSearchBar(controller: searchController),
           const SizedBox(height: 10),
           Expanded(
             child: MenuGrid(
-              cardColor: cardColor,
               onOptionTap: onMenuTap,
               searchController: searchController,
               rolUsuario: userData['rol'] ?? 'Doctor',
@@ -172,7 +168,7 @@ class HomeLayout extends StatelessWidget {
           ),
           Container(
             width: double.infinity,
-            color: darkColor,
+            color: AppColors.darkTopBar,
             padding: const EdgeInsets.all(15),
             child: const Text(
               "Footer",
@@ -193,10 +189,8 @@ class HomeLayout extends StatelessWidget {
 // 3. WIDGETS INDEPENDIENTES (COMPONENTES)
 // ==========================================
 
-// NUEVO: Un StatefulWidget para manejar la animación de marquesina en el header
 class HomeHeaderWidget extends StatefulWidget {
-  final Color darkColor;
-  const HomeHeaderWidget({super.key, required this.darkColor});
+  const HomeHeaderWidget({super.key});
 
   @override
   State<HomeHeaderWidget> createState() => _HomeHeaderWidgetState();
@@ -210,18 +204,15 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
   @override
   void initState() {
     super.initState();
-
-    // Configuramos la animación continua (Infinito y Lineal)
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10), // Velocidad del movimiento
-    )..repeat(); // Repetir infinitamente
+      duration: const Duration(seconds: 10),
+    )..repeat();
 
-    // Desplaza el texto desde la derecha (1.0) hasta salir por la izquierda (-1.0)
     _textAnimation =
         Tween<Offset>(
-          begin: const Offset(1.0, 0.0), // Comienza justo fuera a la derecha
-          end: const Offset(-1.0, 0.0), // Termina justo fuera a la izquierda
+          begin: const Offset(1.0, 0.0),
+          end: const Offset(-1.0, 0.0),
         ).animate(
           CurvedAnimation(parent: _animationController, curve: Curves.linear),
         );
@@ -229,40 +220,39 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
 
   @override
   void dispose() {
-    _animationController.dispose(); // Limpiar controlador al salir
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor = const Color(0xFF88C3C7);
     return Container(
       width: double.infinity,
-      color: widget.darkColor,
+      color: AppColors.darkTopBar,
       child: SafeArea(
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           child: Row(
             children: [
-              // NUEVO: Logo Visual Diseñado ("CLÍNICA" con icono)
               SizedBox(
-                height: 44, // Misma altura que el CircleAvatar anterior
+                height: 44,
                 child: Row(
                   children: [
                     CustomPaint(
                       size: const Size(22, 22),
-                      painter: ClinicLogoCrossHeartPainter(color: accentColor),
+                      painter: ClinicLogoCrossHeartPainter(
+                        color: AppColors.accentColor,
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       "CLÍNICA",
                       style: TextStyle(
-                        fontFamily:
-                            'Inter', // O usa Arial, Helvetica para un look sans-serif bold
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: accentColor,
+                        color: AppColors.accentColor,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -271,17 +261,15 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
               ),
               const SizedBox(width: 10),
 
-              // NUEVO: Contenedor con EFECTO MARQUESINA (Movimiento a la izquierda)
               Expanded(
                 child: Container(
                   height: 35,
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
-                    color: accentColor,
+                    color: AppColors.accentColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  clipBehavior: Clip
-                      .hardEdge, // Importante: Corta el texto que sale de la vista
+                  clipBehavior: Clip.hardEdge,
                   alignment: Alignment.center,
                   child: AnimatedBuilder(
                     animation: _textAnimation,
@@ -370,7 +358,6 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
   }
 }
 
-// NUEVO: Dibujante personalizado para el icono del logo "Clínica" (Corazón y Cruz)
 class ClinicLogoCrossHeartPainter extends CustomPainter {
   final Color color;
   ClinicLogoCrossHeartPainter({required this.color});
@@ -382,11 +369,9 @@ class ClinicLogoCrossHeartPainter extends CustomPainter {
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    // Dibujar un icono de cruz médica estilizada combinada con un corazón abstracto
     final double mid = size.width / 2;
     const double crossSize = 6.0;
 
-    // Dibujar Corazón (línea principal)
     final Path heartPath = Path()
       ..moveTo(mid, size.height * 0.25)
       ..cubicTo(
@@ -408,12 +393,10 @@ class ClinicLogoCrossHeartPainter extends CustomPainter {
       ..close();
     canvas.drawPath(heartPath, paint);
 
-    // Dibujar Cruz (rellena) en el centro del corazón
     final Paint crossPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
 
-    // Horizontal
     canvas.drawRect(
       Rect.fromLTWH(
         mid - (crossSize * 0.8),
@@ -423,7 +406,6 @@ class ClinicLogoCrossHeartPainter extends CustomPainter {
       ),
       crossPaint,
     );
-    // Vertical
     canvas.drawRect(
       Rect.fromLTWH(
         mid - (crossSize * 0.15),
@@ -439,12 +421,9 @@ class ClinicLogoCrossHeartPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Resto de los widgets (no cambiaron)
-
 class UserCard extends StatelessWidget {
   final Map<String, String> userData;
-  final Color cardColor;
-  const UserCard({super.key, required this.userData, required this.cardColor});
+  const UserCard({super.key, required this.userData});
 
   @override
   Widget build(BuildContext context) {
@@ -454,7 +433,7 @@ class UserCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: AppColors.homeCard,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
@@ -540,14 +519,12 @@ class CustomSearchBar extends StatelessWidget {
 }
 
 class MenuGrid extends StatelessWidget {
-  final Color cardColor;
   final Function(String) onOptionTap;
   final TextEditingController searchController;
   final String rolUsuario;
 
   const MenuGrid({
     super.key,
-    required this.cardColor,
     required this.onOptionTap,
     required this.searchController,
     required this.rolUsuario,
@@ -609,7 +586,7 @@ class MenuGrid extends StatelessWidget {
                 onTap: () => onOptionTap(filteredOptions[index]),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: cardColor,
+                    color: AppColors.homeCard,
                     borderRadius: BorderRadius.circular(15),
                   ),
                   alignment: Alignment.center,

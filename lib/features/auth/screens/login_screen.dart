@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // Asegúrate de que estas rutas coincidan exactamente con tu estructura de carpetas
 import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
 import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
+import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,23 +12,18 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controladores para capturar el texto de los inputs
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-
-  // Instancia del ViewModel
   final AuthViewModel _viewModel = AuthViewModel();
 
   @override
   void initState() {
     super.initState();
-    // Inicializamos los usuarios de prueba al cargar la pantalla
     _viewModel.inicializarApp();
   }
 
   @override
   void dispose() {
-    // Es buena práctica limpiar los controladores al cerrar la pantalla
     _userController.dispose();
     _passController.dispose();
     super.dispose();
@@ -47,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final usuarioValido = await _viewModel.autenticar(user, pass);
 
     if (usuarioValido != null && mounted) {
-      // Si el login es exitoso, vamos al Home
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -56,7 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
         (route) => false,
       );
     } else if (_viewModel.errorMessage != null && mounted) {
-      // Si hay error, mostramos el mensaje del ViewModel
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
@@ -65,19 +59,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Definición de colores
-    final Color backgroundColor = const Color(0xFF95AAB4);
-    final Color cardColor = const Color(0xFFD9D9D9);
-    final Color inputColor = const Color(0xFF9FBCC8);
-    final Color buttonColor = const Color(0xFF72AEC6);
-    final Color topBarColor = const Color(0xFF464541);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.altBackground,
       body: Column(
         children: [
           // 1. Barra superior oscura
-          Container(height: 40, color: topBarColor),
+          Container(height: 40, color: AppColors.darkTopBar),
 
           Expanded(
             child: SingleChildScrollView(
@@ -95,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         horizontal: 20,
                       ),
                       decoration: BoxDecoration(
-                        color: inputColor,
+                        color: AppColors.inputFill,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -120,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         horizontal: 30,
                       ),
                       decoration: BoxDecoration(
-                        color: cardColor,
+                        color: AppColors.loginCard,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Column(
@@ -137,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _buildCustomTextField(
                             controller: _userController,
                             hintText: "Ingresar usuario",
-                            fillColor: inputColor,
+                            fillColor: AppColors.inputFill,
                           ),
 
                           const SizedBox(height: 20),
@@ -146,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _buildCustomTextField(
                             controller: _passController,
                             hintText: "Ingresar contraseña",
-                            fillColor: inputColor,
+                            fillColor: AppColors.inputFill,
                             obscureText: true,
                           ),
 
@@ -164,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ? null
                                       : _handleLogin,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: buttonColor,
+                                    backgroundColor: AppColors.buttonPrimary,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(15),
                                     ),
