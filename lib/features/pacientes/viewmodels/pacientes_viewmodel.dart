@@ -1,33 +1,37 @@
 import 'package:flutter/material.dart';
 import '../models/paciente_model.dart';
+import '../repositories/pacientes_repository.dart'; 
 
 class PacientesViewModel extends ChangeNotifier {
-  // Lista maestra de datos
-  final List<PacienteModel> _pacientes = [
-    PacienteModel(
-      idPaciente: 1, // Le asignamos un ID de prueba
-      nombres: 'Jimmy', // Separamos el nombre
-      apellidos: 'Jijon', // Separamos el apellido
-      cedula: '0959734154',
-      telefono: '0999999999',
-      correo: 'jimmy@correo.com', // Correo de prueba
-      estado: 'Activo',
-    ),
-    PacienteModel(
-      idPaciente: 2, // Le asignamos otro ID
-      nombres: 'Sofia', // Separamos el nombre
-      apellidos: 'Garcia', // Separamos el apellido
-      cedula: '0959118154',
-      telefono: '0999999999',
-      correo: 'sofia@correo.com', // Correo de prueba
-      estado: 'Activo',
-    ),
-  ];
+  // 1. Instanciamos el repositorio que habla con SQLite
+  final PacientesRepository _repository = PacientesRepository();
 
-  // Variable para almacenar lo que el usuario escribe
+  // 2. Nuestra lista maestra ahora empieza VACÍA
+  List<PacienteModel> _pacientes = [];
   String _filtroBusqueda = '';
+  
+  // Opcional pero recomendado: un indicador de carga
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  // Getter que devuelve la lista filtrada según el nombre o la cédula
+  // 3. El Constructor: Apenas la pantalla se abra, vamos a la BD a traer los pacientes
+  PacientesViewModel() {
+    cargarPacientes();
+  }
+
+  // --- READ (Leer de la Base de Datos) ---
+  Future<void> cargarPacientes() async {
+    _isLoading = true;
+    notifyListeners();
+
+    // Traemos absolutamente todos los pacientes (activos e inactivos)
+    _pacientes = await _repository.getPacientes();
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // --- LÓGICA DE BÚSQUEDA (La tuya estaba perfecta, la mantenemos) ---
   List<PacienteModel> get pacientes {
     if (_filtroBusqueda.isEmpty) {
       return _pacientes;
@@ -42,33 +46,36 @@ class PacientesViewModel extends ChangeNotifier {
     }).toList();
   }
 
-  // Método para actualizar el filtro desde el TextField
   void filtrarPacientes(String query) {
     _filtroBusqueda = query;
-    notifyListeners(); // Esto redibuja la lista mientras escribes
+    notifyListeners(); 
   }
 
-  void agregarPaciente(PacienteModel nuevo) {
-    _pacientes.add(nuevo);
-    notifyListeners();
+  // --- CREATE (Guardar en Base de Datos) ---
+  Future<void> agregarPaciente(PacienteModel nuevo) async {
+    // 1. Guardamos en SQLite
+    await _repository.insertPaciente(nuevo);
+    // 2. Refrescamos la lista completa para ver al nuevo integrante
+    await cargarPacientes();
   }
 
-  void editarPaciente(int index, PacienteModel actualizado) {
-    // IMPORTANTE: Al editar, debemos buscar el índice real en la lista maestra
-    // por si la lista está filtrada actualmente.
-    final pacienteAEditar = pacientes[index];
-    final indiceReal = _pacientes.indexOf(pacienteAEditar);
-
-    if (indiceReal != -1) {
-      _pacientes[indiceReal] = actualizado;
-      notifyListeners();
-    }
+  // --- UPDATE (Editar en Base de Datos) ---
+  Future<void> editarPaciente(PacienteModel actualizado) async {
+    await _repository.updatePaciente(actualizado);
+    await cargarPacientes();
   }
 
-  void eliminarPaciente(int index) {
-    // Al igual que al editar, eliminamos basándonos en la lista actual visible
-    final pacienteAEliminar = pacientes[index];
-    _pacientes.remove(pacienteAEliminar);
-    notifyListeners();
+  // --- DELETE LOGICO (Inactivar en Base de Datos) ---
+  // CAMBIO CLAVE: Ahora recibimos el PacienteModel completo.
+  // Ya no usamos deletePaciente, usamos updatePaciente.
+  Future<void> eliminarPaciente(PacienteModel paciente) async {
+    // 1. Cambiamos el estado del paciente a 'Inactivo'
+    paciente.estado = 'Inactivo';
+    
+    // 2. Actualizamos el registro en la base de datos
+    await _repository.updatePaciente(paciente);
+    
+    // 3. Recargamos la lista (como cargarPacientes solo trae los 'Activo', este desaparecerá de la vista)
+    await cargarPacientes();
   }
 }
