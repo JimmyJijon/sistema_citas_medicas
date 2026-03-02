@@ -11,6 +11,8 @@ import 'package:provider/provider.dart'; // Soluciona el error de ChangeNotifier
 import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart'; // Soluciona el error de PacientesViewModel
 import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart'; // Soluciona el error de PacientesListScreen
 
+import 'package:sistema_citas_medicas/features/reportes/screens/reportes_screen.dart'; // Ajusta la ruta si es diferente
+
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
@@ -88,7 +90,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         );
-  break;
+        break;
+
+      case "Reportes":
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ReportesScreen()),
+        );
+        break;
 
       default:
         ScaffoldMessenger.of(context).showSnackBar(
