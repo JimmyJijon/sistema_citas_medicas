@@ -10,13 +10,13 @@ class PacientesListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = Provider.of<PacientesViewModel>(context);
+    final vm = context.watch<PacientesViewModel>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // --- HEADER (Estilo Usuarios) ---
+          // --- HEADER ---
           _buildHeader(),
 
           // --- BOTÓN VOLVER ---
@@ -42,37 +42,38 @@ class PacientesListScreen extends StatelessWidget {
                   topRight: Radius.circular(30),
                 ),
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildSectionTitle('Gestión de Pacientes'),
-                    const SizedBox(height: 15),
+              child: vm.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          _buildSectionTitle('Gestión de Pacientes'),
+                          const SizedBox(height: 15),
 
-                    _buildBotonNuevo(context),
-                    const SizedBox(height: 20),
+                          _buildBotonNuevo(context, vm),
+                          const SizedBox(height: 20),
 
-                    _buildSearchBar(vm),
-                    const SizedBox(height: 20),
+                          _buildSearchBar(vm),
+                          const SizedBox(height: 20),
 
-                    // --- LISTADO DE TARJETAS ---
-                    vm.pacientes.isEmpty
-                        ? const Center(
-                            child: Text('No hay pacientes registrados'),
-                          )
-                        : Column(
-                            children: vm.pacientes.asMap().entries.map((entry) {
-                              return _buildPacienteCard(
-                                context,
-                                entry.value,
-                                entry.key,
-                                vm,
-                              );
-                            }).toList(),
-                          ),
-                  ],
-                ),
-              ),
+                          // --- LISTADO DE TARJETAS ---
+                          vm.pacientes.isEmpty
+                              ? const Center(
+                                  child: Text('No hay pacientes registrados'),
+                                )
+                              : Column(
+                                  children: vm.pacientes.map((paciente) {
+                                    return _buildPacienteCard(
+                                      context,
+                                      paciente,
+                                      vm,
+                                    );
+                                  }).toList(),
+                                ),
+                        ],
+                      ),
+                    ),
             ),
           ),
         ],
@@ -146,11 +147,11 @@ class PacientesListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBotonNuevo(BuildContext context) {
+  Widget _buildBotonNuevo(BuildContext context, PacientesViewModel vm) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () => _mostrarDialogoFormulario(context),
+        onPressed: () => _mostrarDialogoFormulario(context, vm),
         icon: const Icon(Icons.add, color: Colors.black),
         label: const Text(
           'Nuevo Paciente',
@@ -169,9 +170,7 @@ class PacientesListScreen extends StatelessWidget {
 
   Widget _buildSearchBar(PacientesViewModel vm) {
     return TextField(
-      // ESTA ES LA LÍNEA QUE DEBES AGREGAR:
       onChanged: (value) => vm.filtrarPacientes(value),
-
       decoration: InputDecoration(
         hintText: 'Buscar por nombre o cédula...',
         prefixIcon: const Icon(Icons.search),
@@ -188,55 +187,72 @@ class PacientesListScreen extends StatelessWidget {
   Widget _buildPacienteCard(
     BuildContext context,
     PacienteModel paciente,
-    int index,
     PacientesViewModel vm,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
-            child: Text(
-              paciente.nombres[0],
-              style: const TextStyle(color: Colors.black),
+    // Verificamos si el paciente está inactivo
+    final bool esInactivo = paciente.estado == 'Inactivo';
+
+    // Usamos Opacity para dar el efecto de desvanecido
+    return Opacity(
+      opacity: esInactivo ? 0.5 : 1.0, // 50% de opacidad si es inactivo
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: esInactivo ? Colors.grey.shade100 : Colors.white, // Fondo un poco más gris si es inactivo
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
+              child: Text(
+                paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
+                style: const TextStyle(color: Colors.black),
+              ),
             ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  paciente.nombres,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '${paciente.cedula} • ${paciente.estado}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${paciente.nombres} ${paciente.apellidos}'.trim(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      decoration: esInactivo ? TextDecoration.lineThrough : null, // Opcional: tachar el nombre
+                    ),
+                  ),
+                  Text(
+                    '${paciente.cedula} • ${paciente.estado}',
+                    style: TextStyle(
+                      color: esInactivo ? Colors.redAccent : Colors.grey[600], 
+                      fontSize: 12,
+                      fontWeight: esInactivo ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.blueGrey),
-            onPressed: () => _mostrarDialogoFormulario(
-              context,
-              paciente: paciente,
-              index: index,
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.blueGrey),
+              onPressed: () => _mostrarDialogoFormulario(
+                context,
+                vm,
+                paciente: paciente,
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.redAccent),
-            onPressed: () => vm.eliminarPaciente(index),
-          ),
-        ],
+            // Solo mostramos el botón de eliminar si el paciente ESTÁ ACTIVO
+            if (!esInactivo)
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                onPressed: () {
+                  _mostrarDialogoConfirmacion(context, paciente, vm);
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -244,17 +260,20 @@ class PacientesListScreen extends StatelessWidget {
   // --- LÓGICA DE FORMULARIO Y VALIDACIONES ---
 
   void _mostrarDialogoFormulario(
-    BuildContext context, {
+    BuildContext context,
+    PacientesViewModel vm, {
     PacienteModel? paciente,
-    int? index,
   }) {
     final bool esEdicion = paciente != null;
 
-    // Controladores para capturar texto y validar
     final nombreCtrl = TextEditingController(text: paciente?.nombres);
+    final apellidosCtrl = TextEditingController(text: paciente?.apellidos);
     final cedulaCtrl = TextEditingController(text: paciente?.cedula);
     final telefonoCtrl = TextEditingController(text: paciente?.telefono);
-    String estadoSeleccionado = paciente?.estado ?? 'Activo';
+    final correoCtrl = TextEditingController(text: paciente?.correo);
+    
+    // Guardamos el estado actual si es edición, o asignamos 'Activo' por defecto si es nuevo
+    final String estadoSeleccionado = paciente?.estado ?? 'Activo';
 
     showDialog(
       context: context,
@@ -275,47 +294,38 @@ class PacientesListScreen extends StatelessWidget {
               children: [
                 CampoFormulario(
                   label: 'Nombres',
-                  hint: 'Ej: Jhon Doe',
+                  hint: 'Ej: Juan Pablo',
                   controller: nombreCtrl,
-                  soloLetras: true, // Validación activa
+                  soloLetras: true,
+                ),
+                const SizedBox(height: 10),
+                CampoFormulario(
+                  label: 'Apellidos',
+                  hint: 'Ej: Pérez Gómez',
+                  controller: apellidosCtrl,
+                  soloLetras: true,
                 ),
                 const SizedBox(height: 10),
                 CampoFormulario(
                   label: 'Cédula',
                   hint: 'Ej: 0102030405',
                   controller: cedulaCtrl,
-                  soloNumeros: true, // Validación activa
+                  soloNumeros: true,
                 ),
                 const SizedBox(height: 10),
                 CampoFormulario(
                   label: 'Teléfono',
-                  hint: 'Ej: 0123456789',
+                  hint: 'Ej: 0991234567',
                   controller: telefonoCtrl,
-                  soloNumeros: true, // Validación activa
+                  soloNumeros: true,
                 ),
-                const SizedBox(height: 15),
-
-                // Selector de Estado
-                Row(
-                  children: [
-                    const Text(
-                      "Estado: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 10),
-                    DropdownButton<String>(
-                      value: estadoSeleccionado,
-                      items: ['Activo', 'Inactivo'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (nuevo) =>
-                          setState(() => estadoSeleccionado = nuevo!),
-                    ),
-                  ],
+                const SizedBox(height: 10),
+                CampoFormulario(
+                  label: 'Correo',
+                  hint: 'Ej: juan@email.com',
+                  controller: correoCtrl,
                 ),
+                // Eliminamos la fila del DropdownButton de Estado. El usuario ya no lo ve.
               ],
             ),
           ),
@@ -348,14 +358,14 @@ class PacientesListScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // VALIDACIÓN: Todos los campos son obligatorios
                       if (nombreCtrl.text.trim().isEmpty ||
+                          apellidosCtrl.text.trim().isEmpty ||
                           cedulaCtrl.text.trim().isEmpty ||
                           telefonoCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Por favor, llene todos los campos obligatorios',
+                              'Por favor, llene todos los campos obligatorios.',
                             ),
                           ),
                         );
@@ -363,21 +373,17 @@ class PacientesListScreen extends StatelessWidget {
                       }
 
                       final p = PacienteModel(
-                        idPaciente: 0,
+                        idPaciente: paciente?.idPaciente,
                         cedula: cedulaCtrl.text,
                         nombres: nombreCtrl.text,
-                        apellidos: '',
+                        apellidos: apellidosCtrl.text,
                         telefono: telefonoCtrl.text,
-                        correo: '',
-                        estado: estadoSeleccionado,
+                        correo: correoCtrl.text,
+                        estado: estadoSeleccionado, // Se asigna el estado silenciosamente
                       );
-
-                      final vm = Provider.of<PacientesViewModel>(
-                        context,
-                        listen: false,
-                      );
+                      
                       if (esEdicion) {
-                        vm.editarPaciente(index!, p);
+                        vm.editarPaciente(p);
                       } else {
                         vm.agregarPaciente(p);
                       }
@@ -397,6 +403,82 @@ class PacientesListScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // --- AVISO DE CONFIRMACIÓN PARA ELIMINAR ---
+  void _mostrarDialogoConfirmacion(
+    BuildContext context,
+    PacienteModel paciente,
+    PacientesViewModel vm,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, 
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25),
+        ),
+        title: const Text(
+          'Eliminar Paciente',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar a ${paciente.nombres} ${paciente.apellidos}?\n\nEsta acción no lo borrará por completo, solo lo marcará como inactivo.',
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context), 
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: AppColors.btnRed,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent, 
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: () {
+                    vm.eliminarPaciente(paciente);
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Paciente eliminado correctamente'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Eliminar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
