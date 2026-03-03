@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-// Asegúrate de que estas rutas coincidan exactamente con tu estructura de carpetas
-import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 
@@ -14,12 +13,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-  final AuthViewModel _viewModel = AuthViewModel();
 
   @override
   void initState() {
     super.initState();
-    _viewModel.inicializarApp();
+    Future.microtask(() {
+      context.read<AuthViewModel>().inicializarApp();
+    });
   }
 
   @override
@@ -40,20 +40,22 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final usuarioValido = await _viewModel.autenticar(user, pass);
+    final viewModel = context.read<AuthViewModel>();
+    final usuarioValido = await viewModel.autenticar(user, pass);
 
-    if (usuarioValido != null && mounted) {
-      Navigator.pushAndRemoveUntil(
+    if (!mounted) return;
+
+    if (usuarioValido != null) {
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(idUsuario: usuarioValido.idUsuario),
-        ),
+        '/home',
         (route) => false,
+        arguments: usuarioValido.idUsuario,
       );
-    } else if (_viewModel.errorMessage != null && mounted) {
+    } else if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
+      ).showSnackBar(SnackBar(content: Text(viewModel.errorMessage!)));
     }
   }
 
@@ -63,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppColors.altBackground,
       body: Column(
         children: [
-          // 1. Barra superior oscura
+          // Barra superior oscura
           Container(height: 40, color: AppColors.darkTopBar),
 
           Expanded(
@@ -75,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const SizedBox(height: 40),
 
-                    // 2. Título "Sistema de gestión..."
+                    // Título
                     Container(
                       padding: const EdgeInsets.symmetric(
                         vertical: 15,
@@ -98,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 40),
 
-                    // 3. Tarjeta Central (Card)
+                    // Card Login
                     Container(
                       width: double.infinity,
                       constraints: const BoxConstraints(maxWidth: 400),
@@ -120,7 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 30),
 
-                          // Campo: Ingresar usuario
                           _buildCustomTextField(
                             controller: _userController,
                             hintText: "Ingresar usuario",
@@ -129,7 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 20),
 
-                          // Campo: Ingresar contraseña
                           _buildCustomTextField(
                             controller: _passController,
                             hintText: "Ingresar contraseña",
@@ -139,15 +139,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 30),
 
-                          // Botón Ingresar
                           SizedBox(
                             width: 200,
                             height: 45,
-                            child: ListenableBuilder(
-                              listenable: _viewModel,
-                              builder: (context, _) {
+                            child: Consumer<AuthViewModel>(
+                              builder: (context, viewModel, _) {
                                 return ElevatedButton(
-                                  onPressed: _viewModel.isLoading
+                                  onPressed: viewModel.isLoading
                                       ? null
                                       : _handleLogin,
                                   style: ElevatedButton.styleFrom(
@@ -157,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     elevation: 0,
                                   ),
-                                  child: _viewModel.isLoading
+                                  child: viewModel.isLoading
                                       ? const SizedBox(
                                           height: 20,
                                           width: 20,
@@ -181,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 50),
                   ],
                 ),

@@ -46,49 +46,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
     switch (menuOption) {
       case "Agenda":
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AgendaView()),
-        );
+        Navigator.pushNamed(context, '/agenda');
         break;
+
       case "Registrar Cita":
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const RegistrarCitaView()),
-        );
+        Navigator.pushNamed(context, '/registrar-cita');
         break;
+
       case "Usuarios":
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const GestionUsuariosScreen(),
-          ),
-        );
+        Navigator.pushNamed(context, '/usuarios');
         break;
+
       case "Configuración de horario":
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HorarioScreen()),
-        );
+        Navigator.pushNamed(context, '/horario');
         break;
+
       case "Gestión de Pacientes":
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChangeNotifierProvider(
-              create: (_) => PacientesViewModel(),
-              child: const PacientesListScreen(),
-            ),
-          ),
-        );
+        Navigator.pushNamed(context, '/pacientes');
         break;
+
+      case "Restricciones de horario":
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("En construcción")));
+        break;
+
+      case "Reportes":
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("En construcción")));
+        break;
+
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Seleccionaste: $menuOption (En construcción)'),
-            duration: const Duration(milliseconds: 500),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Opción no válida")));
     }
   }
 
@@ -281,10 +273,7 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AlertsView()),
-                  );
+                  Navigator.pushNamed(context, '/alertas');
                 },
                 child: Stack(
                   children: [
@@ -319,11 +308,9 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushAndRemoveUntil(
+                  Navigator.pushNamedAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
-                    ),
+                    '/login',
                     (route) => false,
                   );
                 },
