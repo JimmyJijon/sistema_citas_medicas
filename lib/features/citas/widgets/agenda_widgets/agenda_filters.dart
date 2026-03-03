@@ -10,6 +10,7 @@ class AgendaFilters extends StatelessWidget {
   final VoidCallback onTapDesde;
   final VoidCallback onTapHasta;
   final Function(String?) onChangedEstado;
+  final Function(String) onChangedPaciente; // ← conectado
 
   const AgendaFilters({
     Key? key,
@@ -19,15 +20,19 @@ class AgendaFilters extends StatelessWidget {
     required this.onTapDesde,
     required this.onTapHasta,
     required this.onChangedEstado,
+    required this.onChangedPaciente,
   }) : super(key: key);
 
-  String _formatearFecha(DateTime fecha) => "${fecha.day}/${fecha.month}/${fecha.year}";
+  String _formatearFecha(DateTime fecha) =>
+      "${fecha.day.toString().padLeft(2, '0')}/"
+      "${fecha.month.toString().padLeft(2, '0')}/"
+      "${fecha.year}";
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Título de Sección
+        // Título
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -49,11 +54,12 @@ class AgendaFilters extends StatelessWidget {
           child: CustomInputContainer(
             child: TextField(
               decoration: const InputDecoration(
-                  hintText: "[Buscar por cédula]",
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(bottom: 5),
-                  hintStyle: TextStyle(fontSize: 14, color: Colors.black54)),
-              onChanged: (val) {},
+                hintText: "Buscar por nombre o cédula",
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.only(bottom: 5),
+                hintStyle: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+              onChanged: onChangedPaciente,
             ),
           ),
         ),
@@ -63,7 +69,13 @@ class AgendaFilters extends StatelessWidget {
           label: "Desde:",
           child: CustomInputContainer(
             onTap: onTapDesde,
-            child: Text(_formatearFecha(fechaDesde)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(_formatearFecha(fechaDesde)),
+                const Icon(Icons.calendar_today, size: 16),
+              ],
+            ),
           ),
         ),
 
@@ -72,24 +84,44 @@ class AgendaFilters extends StatelessWidget {
           label: "Hasta:",
           child: CustomInputContainer(
             onTap: onTapHasta,
-            child: Text(_formatearFecha(fechaHasta)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(_formatearFecha(fechaHasta)),
+                const Icon(Icons.calendar_today, size: 16),
+              ],
+            ),
           ),
         ),
 
-        // Filtro Estado
+        // Filtro Estado — valores reales que guarda el ViewModel
         FormLabelField(
           label: "Estado:",
           child: CustomInputContainer(
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
+              child: DropdownButton<String?>(
                 value: estadoSeleccionado,
-                hint: const Text("[Todas]"),
+                hint: const Text("Todas"),
                 isExpanded: true,
                 icon: const Icon(Icons.arrow_drop_down),
                 items: const [
-                  DropdownMenuItem(value: null, child: Text("Todas")),
-                  DropdownMenuItem(value: "ING", child: Text("Ingresadas")),
-                  DropdownMenuItem(value: "COM", child: Text("Completadas")),
+                  DropdownMenuItem<String?>(value: null, child: Text("Todas")),
+                  DropdownMenuItem<String?>(
+                    value: "Ingresada",
+                    child: Text("Ingresada"),
+                  ),
+                  DropdownMenuItem<String?>(
+                    value: "Completada",
+                    child: Text("Completada"),
+                  ),
+                  DropdownMenuItem<String?>(
+                    value: "Reagendada",
+                    child: Text("Reagendada"),
+                  ),
+                  DropdownMenuItem<String?>(
+                    value: "Cancelada",
+                    child: Text("Cancelada"),
+                  ),
                 ],
                 onChanged: onChangedEstado,
               ),

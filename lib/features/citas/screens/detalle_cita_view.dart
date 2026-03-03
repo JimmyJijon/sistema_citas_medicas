@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/features/citas/viewmodels/citas_viewmodel.dart';
 import '../widgets/app_header.dart';
 import '../widgets/section_title.dart';
 import '../widgets/detail_info_row.dart';
@@ -8,8 +10,53 @@ import '../widgets/detalle_cita_widgets/history_log_item.dart';
 class DetalleCitaView extends StatelessWidget {
   const DetalleCitaView({Key? key}) : super(key: key);
 
+  // ─────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────
+
+  String _formatearFecha(String fechaIso) {
+    try {
+      final f = DateTime.parse(fechaIso);
+      return "${f.day.toString().padLeft(2, '0')}/"
+          "${f.month.toString().padLeft(2, '0')}/"
+          "${f.year}";
+    } catch (_) {
+      return fechaIso;
+    }
+  }
+
+  String _formatearFechaHora(String fechaIso) {
+    try {
+      final f = DateTime.parse(fechaIso);
+      return "${f.day.toString().padLeft(2, '0')}/"
+          "${f.month.toString().padLeft(2, '0')}/"
+          "${f.year} "
+          "${f.hour.toString().padLeft(2, '0')}:"
+          "${f.minute.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return fechaIso;
+    }
+  }
+
+  // ─────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<CitaViewModel>();
+    final cita = vm.citaSeleccionada;
+
+    // Protección: si no hay cita seleccionada, volvemos atrás
+    if (cita == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pop(context);
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -17,7 +64,7 @@ class DetalleCitaView extends StatelessWidget {
           // 1. Header
           const AppHeader(title: "Inicio / Agenda / Detalle"),
 
-          // 2. BOTÓN VOLVER
+          // 2. Botón Volver
           Padding(
             padding: const EdgeInsets.only(left: 20, top: 15, bottom: 0),
             child: Align(
@@ -57,10 +104,9 @@ class DetalleCitaView extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Column(
                 children: [
-                  
-                  // --- BLOQUE 1: INFO DE LA CITA ---
+                  // ── Bloque 1: Info de la cita ──
                   const SectionTitle(title: "Detalle de Cita"),
-                  
+
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -76,36 +122,40 @@ class DetalleCitaView extends StatelessWidget {
                       ],
                     ),
                     child: Column(
-                      children: const [
+                      children: [
                         DetailInfoRow(
-                          icon: Icons.person, 
-                          label: "Paciente", 
-                          value: "Jorge Castro"
+                          icon: Icons.person,
+                          label: "Paciente",
+                          value: cita['nombre_paciente'] ?? '—',
                         ),
                         DetailInfoRow(
-                          icon: Icons.calendar_today, 
-                          label: "Fecha", 
-                          value: "05/03/2026"
+                          icon: Icons.badge_outlined,
+                          label: "Cédula",
+                          value: cita['cedula'] ?? '—',
                         ),
                         DetailInfoRow(
-                          icon: Icons.access_time, 
-                          label: "Franja Horaria", 
-                          value: "10:00 - 10:20"
+                          icon: Icons.calendar_today,
+                          label: "Fecha",
+                          value: _formatearFecha(cita['fecha'] ?? ''),
                         ),
                         DetailInfoRow(
-                          icon: Icons.info_outline, 
-                          label: "Estado", 
-                          value: "Reagendada", 
-                          isLast: true
+                          icon: Icons.access_time,
+                          label: "Franja Horaria",
+                          value: "${cita['hora_inicio']} - ${cita['hora_fin']}",
+                        ),
+                        DetailInfoRow(
+                          icon: Icons.info_outline,
+                          label: "Estado",
+                          value: cita['estado'] ?? '—',
+                          isLast: true,
                         ),
                       ],
                     ),
                   ),
 
-                  // AJUSTE: Reduje este espacio de 30 a 15
                   const SizedBox(height: 15),
 
-                  // --- BLOQUE 2: HISTORIAL ---
+                  // ── Bloque 2: Historial ──
                   const SectionTitle(title: "Historial de acciones"),
 
                   Container(
@@ -122,27 +172,45 @@ class DetalleCitaView extends StatelessWidget {
                         )
                       ],
                     ),
-                    child: Column(
-                      children: const [
-                        HistoryLogItem(
-                          date: "15/09/2026 10:30",
-                          user: "Recepcionista",
-                          action: "Reagendada",
-                          description: "Se ajusta la franja horaria por retraso del paciente.",
-                        ),
-                        
-                        SizedBox(height: 15),
-                        
-                        HistoryLogItem(
-                          date: "10/09/2026 09:00",
-                          user: "Sistema",
-                          action: "Creación",
-                          description: "Cita creada exitosamente desde el módulo web.",
-                        ),
-                      ],
-                    ),
+                    child: vm.isLoadingHistorial
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : vm.historialCita.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Text(
+                                  "Sin acciones registradas.",
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                              )
+                            : Column(
+                                children: vm.historialCita
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                  final i = entry.key;
+                                  final h = entry.value;
+                                  return Column(
+                                    children: [
+                                      HistoryLogItem(
+                                        date: _formatearFechaHora(
+                                            h['fecha_evento'] ?? ''),
+                                        user: h['nombre_usuario'] ?? '—',
+                                        action: h['estado'] ?? '—',
+                                        description: h['descripcion'] ?? '',
+                                      ),
+                                      if (i < vm.historialCita.length - 1)
+                                        const SizedBox(height: 15),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
                   ),
-                  
+
                   const SizedBox(height: 40),
                 ],
               ),
