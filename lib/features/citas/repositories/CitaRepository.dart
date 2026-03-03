@@ -1,0 +1,128 @@
+import '../../../core/database/database_helper.dart';
+import '../models/cita_model.dart';
+import '../models/historial_cita_model.dart';
+import '../../pacientes/models/paciente_model.dart';
+import 'package:sqflite/sqflite.dart';
+
+class CitaRepository {
+  final _dbHelper = DatabaseHelper.instance;
+
+  Future<List<PacienteModel>> obtenerPacientesActivos() async {
+    final db = await _dbHelper.database;
+    final maps = await db.query('paciente', where: 'estado = ?', whereArgs: ['Activo']);
+    return maps.map((m) => PacienteModel.fromMap(m)).toList();
+  }
+
+  Future<int> insertarCita(Cita cita) async {
+    final db = await _dbHelper.database;
+    final map = cita.toJson()..remove('id_cita');
+    return await db.insert('cita', map);
+  }
+
+  Future<List<Map<String, dynamic>>> obtenerTodasLasCitas() async {
+    final db = await _dbHelper.database;
+    return await db.rawQuery('''
+      SELECT c.id_cita, c.id_paciente,
+        p.nombres || ' ' || p.apellidos AS nombre_paciente,
+        p.cedula, c.fecha, c.hora_inicio, c.hora_fin,
+        c.estado, c.creada_por, c.fecha_creacion
+      FROM cita c
+      INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+      ORDER BY c.fecha DESC, c.hora_inicio ASC
+    ''');
+  }
+
+  Future<Cita?> obtenerCitaPorId(int idCita) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query('cita', where: 'id_cita = ?', whereArgs: [idCita]);
+    if (maps.isEmpty) return null;
+    return Cita.fromJson(maps.first);
+  }
+
+  Future<List<Map<String, dynamic>>> obtenerCitasPorFecha(DateTime fecha) async {
+    final db = await _dbHelper.database;
+    final fechaStr = fecha.toIso8601String().split('T')[0];
+    return await db.rawQuery('''
+      SELECT c.id_cita, c.id_paciente,
+        p.nombres || ' ' || p.apellidos AS nombre_paciente,
+        p.cedula, c.fecha, c.hora_inicio, c.hora_fin,
+        c.estado, c.creada_por, c.fecha_creacion
+      FROM cita c
+      INNER JOIN paciente p ON c.id_paciente = p.id_paciente
+      WHERE c.fecha = ?
+      ORDER BY c.hora_inicio ASC
+    ''', [fechaStr]);
+  }
+
+  Future<int> actualizarCita(Cita cita) async {
+    final db = await _dbHelper.database;
+    return await db.update('cita', cita.toJson(), where: 'id_cita = ?', whereArgs: [cita.idCita]);
+  }
+
+  Future<int> actualizarEstadoCita(int idCita, String nuevoEstado) async {
+    final db = await _dbHelper.database;
+    return await db.update('cita', {'estado': nuevoEstado}, where: 'id_cita = ?', whereArgs: [idCita]);
+  }
+
+  Future<int> eliminarCita(int idCita) async {
+    final db = await _dbHelper.database;
+    return await db.delete('cita', where: 'id_cita = ?', whereArgs: [idCita]);
+  }
+
+  Future<List<Map<String, dynamic>>> obtenerHistorialPorCita(int idCita) async {
+    final db = await _dbHelper.database;
+    return await db.rawQuery('''
+      SELECT h.id_historial, h.id_cita, h.estado, h.descripcion,
+        h.fecha_evento, h.id_usuario,
+        u.nombre || ' ' || u.apellido AS nombre_usuario, u.rol
+      FROM historial_cita h
+      INNER JOIN usuario u ON h.id_usuario = u.id_usuario
+      WHERE h.id_cita = ?
+      ORDER BY h.fecha_evento DESC
+    ''', [idCita]);
+  }
+
+  Future<int> insertarHistorial(HistorialCita historial) async {
+    final db = await _dbHelper.database;
+    final map = historial.toJson()..remove('id_historial');
+    return await db.insert('historial_cita', map);
+  }
+
+  // ─────────────────────────────────────────
+  // VERIFICAR SI EL PACIENTE TIENE CITA ACTIVA
+  // ─────────────────────────────────────────
+  Future<bool> pacienteTieneCitaActiva(int idPaciente) async {
+    // Obtenemos la instancia de la base de datos
+    final db = await _dbHelper.database;
+
+    // Ejecutamos una consulta que cuenta cuántas citas existen
+    // para ese paciente con estado Ingresada o Reagendada
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as total
+      FROM cita
+      WHERE id_paciente = ?
+      AND estado IN ('Ingresada', 'Reagendada')
+    ''', [idPaciente]);
+
+    // Extraemos el valor numérico del COUNT(*)
+    // Si no hay resultados, devuelve 0
+    final total = Sqflite.firstIntValue(result) ?? 0;
+
+    // Retorna true si existe al menos una cita activa
+    return total > 0;
+  }
+
+    Future<void> actualizarEstadosAntiguos() async {
+    final db = await _dbHelper.database; // tu instancia de BD
+
+    // Cambia Pendiente → Ingresada
+    await db.rawUpdate(
+      "UPDATE cita SET estado = 'Ingresada' WHERE estado = 'Pendiente'"
+    );
+
+    // Cambia Confirmada → Ingresada (si existe)
+    await db.rawUpdate(
+      "UPDATE cita SET estado = 'Ingresada' WHERE estado = 'Confirmada'"
+    );
+  }
+}

@@ -1,23 +1,110 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/features/citas/viewmodels/citas_viewmodel.dart';
 import '../widgets/app_header.dart';
-// Widgets Modulares Reutilizados
 import '../widgets/section_title.dart';
 import '../widgets/detail_info_row.dart';
 import '../widgets/observation_input.dart';
-// Widget Nuevo
 import '../widgets/cancelar_cita_widgets/cancel_action_buttons.dart';
 
-class CancelarCitaView extends StatelessWidget {
+class CancelarCitaView extends StatefulWidget {
   const CancelarCitaView({Key? key}) : super(key: key);
 
   @override
+  State<CancelarCitaView> createState() => _CancelarCitaViewState();
+}
+
+class _CancelarCitaViewState extends State<CancelarCitaView> {
+  final TextEditingController _motivoController = TextEditingController();
+
+  // TODO: Reemplazar con usuario de sesión al integrar auth
+  static const int _idUsuarioActual = 1;
+
+  @override
+  void dispose() {
+    _motivoController.dispose();
+    super.dispose();
+  }
+
+  // ─────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────
+
+  String _formatearFecha(String fechaIso) {
+    try {
+      final f = DateTime.parse(fechaIso);
+      return "${f.day.toString().padLeft(2, '0')}/"
+          "${f.month.toString().padLeft(2, '0')}/"
+          "${f.year}";
+    } catch (_) {
+      return fechaIso;
+    }
+  }
+
+  // ─────────────────────────────────────────
+  // CONFIRMAR CANCELACIÓN
+  // ─────────────────────────────────────────
+
+  Future<void> _confirmarCancelacion() async {
+    final motivo = _motivoController.text.trim();
+
+    if (motivo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Ingresa el motivo de la cancelación'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final vm = context.read<CitaViewModel>();
+    final exito = await vm.registrarAccionEnHistorial(
+      idUsuario: _idUsuarioActual,
+      nuevoEstado: 'Cancelada',
+      descripcion: motivo,
+    );
+
+    if (!mounted) return;
+
+    if (exito) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Cita cancelada correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(vm.errorMessage ?? '❌ Error al cancelar la cita'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────
+
+  @override
   Widget build(BuildContext context) {
+    final vm = context.watch<CitaViewModel>();
+    final cita = vm.citaSeleccionada;
+
+    if (cita == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => Navigator.pop(context));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // 1. Header Global
+          // 1. Header
           const AppHeader(title: "Inicio / Agenda / Cancelar cita"),
 
           Expanded(
@@ -25,11 +112,10 @@ class CancelarCitaView extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  
-                  // 2. Título de Sección
+                  // 2. Título
                   const SectionTitle(title: "Cancelar Cita"),
-                  
-                  // 3. Contenedor de Información (Reutilizando diseño)
+
+                  // 3. Info de la cita
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -45,23 +131,23 @@ class CancelarCitaView extends StatelessWidget {
                       ],
                     ),
                     child: Column(
-                      children: const [
+                      children: [
                         DetailInfoRow(
-                          label: "Paciente", 
-                          value: "Juan Perez"
+                          label: "Paciente",
+                          value: cita['nombre_paciente'] ?? '—',
                         ),
                         DetailInfoRow(
-                          label: "Fecha", 
-                          value: "[05/03/2026]"
+                          label: "Fecha",
+                          value: _formatearFecha(cita['fecha'] ?? ''),
                         ),
                         DetailInfoRow(
-                          label: "Franja horaria", 
-                          value: "[10:00 - 10:20]"
+                          label: "Franja horaria",
+                          value: "${cita['hora_inicio']} - ${cita['hora_fin']}",
                         ),
                         DetailInfoRow(
-                          label: "Estado Actual", 
-                          value: "[Ingresada]",
-                          isLast: true
+                          label: "Estado Actual",
+                          value: cita['estado'] ?? '—',
+                          isLast: true,
                         ),
                       ],
                     ),
@@ -69,29 +155,25 @@ class CancelarCitaView extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 4. Sección Motivo
+                  // 4. Motivo
                   const SectionTitle(title: "Motivo de la cancelación"),
-                  
-                  // 5. Input (Reutilizado de la pantalla anterior)
-                  const ObservationInput(
-                    hintText: "[Descripción]",
+
+                  // 5. Input con controller
+                  ObservationInput(
+                    hintText: "Describe el motivo de la cancelación...",
+                    controller: _motivoController,
                   ),
 
                   const SizedBox(height: 30),
 
-                  // 6. Botones de Acción (Invertidos para esta vista)
-                  CancelActionButtons(
-                    onConfirmCancel: () {
-                      // Lógica para procesar la cancelación
-                      print("Cita cancelada definitivamente");
-                      Navigator.pop(context);
-                    },
-                    onAbort: () {
-                      // Lógica para no hacer nada y volver
-                      Navigator.pop(context);
-                    },
-                  ),
-                  
+                  // 6. Botones
+                  vm.isLoading
+                      ? const CircularProgressIndicator()
+                      : CancelActionButtons(
+                          onConfirmCancel: _confirmarCancelacion,
+                          onAbort: () => Navigator.pop(context),
+                        ),
+
                   const SizedBox(height: 40),
                 ],
               ),
