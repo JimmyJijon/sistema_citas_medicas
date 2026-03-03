@@ -1,44 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:sistema_citas_medicas/features/alertas/screens/alerts_view.dart';
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
-// Pantallas de agenda y registrar cita
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view.dart';
 import 'package:sistema_citas_medicas/features/horarios/screens/horario_screen.dart';
 import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_screen.dart';
-
-import 'package:provider/provider.dart'; // Soluciona el error de ChangeNotifierProvider
-import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart'; // Soluciona el error de PacientesViewModel
-import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart'; // Soluciona el error de PacientesListScreen
-
+import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart';
+import 'package:sistema_citas_medicas/features/home/viewmodels/home_viewmodel.dart';
+import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
 // ==========================================
-void main() {
-  runApp(
-    const MaterialApp(debugShowCheckedModeBanner: false, home: HomeScreen()),
-  );
-}
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int idUsuario;
+
+  const HomeScreen({super.key, required this.idUsuario});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // CONTROLADOR: lógica del buscador
   final TextEditingController _searchController = TextEditingController();
+  final HomeViewModel _viewModel = HomeViewModel();
 
-  // DATOS: Simulamos datos que podrían venir de una base de datos
-  final Map<String, String> userData = {
-    "nombre": "Juan Vera",
-    "cedula": "0900000000",
-    "rol": "Doctor",
-    "codigo": "001",
-  };
+  @override
+  void initState() {
+    super.initState();
+    _viewModel.cargarUsuario(widget.idUsuario);
+  }
 
   @override
   void dispose() {
@@ -56,40 +51,37 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(builder: (context) => const AgendaView()),
         );
         break;
-
       case "Registrar Cita":
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const RegistrarCitaView()),
         );
         break;
-
       case "Usuarios":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const GestionUsuariosScreen()),
+          MaterialPageRoute(
+            builder: (context) => const GestionUsuariosScreen(),
+          ),
         );
-
         break;
-            case "Configuración de horario":
+      case "Configuración de horario":
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const HorarioScreen()),
         );
         break;
-
-      case "Gestión de Pacientes": 
+      case "Gestión de Pacientes":
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChangeNotifierProvider(
-              create: (_) => PacientesViewModel(), // Creamos el almacén solo para tu pantalla
+              create: (_) => PacientesViewModel(),
               child: const PacientesListScreen(),
             ),
           ),
         );
-  break;
-
+        break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -102,10 +94,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return HomeLayout(
-      userData: userData,
-      searchController: _searchController,
-      onMenuTap: _onMenuOptionTap,
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        if (_viewModel.isLoading) {
+          return const Scaffold(
+            backgroundColor: AppColors.altBackground,
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
+        }
+
+        if (_viewModel.usuario == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text("Error")),
+            body: const Center(
+              child: Text("Error al cargar los datos del usuario"),
+            ),
+          );
+        }
+
+        final userData = {
+          "nombre":
+              "${_viewModel.usuario!.nombre} ${_viewModel.usuario!.apellido}",
+          "correo": _viewModel.usuario!.correo,
+          "rol": _viewModel.usuario!.rol,
+          "codigo": _viewModel.usuario!.idUsuario.toString().padLeft(3, '0'),
+        };
+
+        return HomeLayout(
+          userData: userData,
+          searchController: _searchController,
+          onMenuTap: _onMenuOptionTap,
+        );
+      },
     );
   }
 }
@@ -113,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
 // ==========================================
 // 2. LAYOUT PRINCIPAL (DISEÑO ESTRUCTURAL)
 // ==========================================
+
 class HomeLayout extends StatelessWidget {
   final Map<String, String> userData;
   final TextEditingController searchController;
@@ -127,61 +149,21 @@ class HomeLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor = const Color(0xFF95AAB4);
-    final Color darkColor = const Color(0xFF464541);
-    final Color cardColor = const Color(0xFFE6E6E1);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.altBackground,
       body: Column(
         children: [
-          // Header extraído (Ahora Responsive)
-          HomeHeader(darkColor: darkColor),
-
-          // Sub-header
-          Container(
-            width: double.infinity,
-            color: cardColor,
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: const Text(
-              "Version movil",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Courier',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
+          const HomeHeaderWidget(),
           const SizedBox(height: 15),
-
-          // Tarjeta de Usuario extraída
-          UserCard(userData: userData, cardColor: cardColor),
-
+          UserCard(userData: userData),
           const SizedBox(height: 15),
-
-          // Barra de Búsqueda Funcional extraída
           CustomSearchBar(controller: searchController),
-
           const SizedBox(height: 10),
-
-          // Grid de Menú extraído
           Expanded(
-            child: MenuGrid(cardColor: cardColor, onOptionTap: onMenuTap),
-          ),
-
-          // Footer
-          Container(
-            width: double.infinity,
-            color: darkColor,
-            padding: const EdgeInsets.all(15),
-            child: const Text(
-              "Footer",
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'Courier',
-                fontSize: 18,
-              ),
+            child: MenuGrid(
+              onOptionTap: onMenuTap,
+              searchController: searchController,
+              rolUsuario: userData['rol'] ?? 'Doctor',
             ),
           ),
         ],
@@ -194,58 +176,109 @@ class HomeLayout extends StatelessWidget {
 // 3. WIDGETS INDEPENDIENTES (COMPONENTES)
 // ==========================================
 
-// --- HEADER CORREGIDO (RESPONSIVE) ---
-class HomeHeader extends StatelessWidget {
-  final Color darkColor;
+class HomeHeaderWidget extends StatefulWidget {
+  const HomeHeaderWidget({super.key});
 
-  const HomeHeader({super.key, required this.darkColor});
+  @override
+  State<HomeHeaderWidget> createState() => _HomeHeaderWidgetState();
+}
+
+class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _textAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+
+    _textAnimation =
+        Tween<Offset>(
+          begin: const Offset(1.0, 0.0),
+          end: const Offset(-1.0, 0.0),
+        ).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.linear),
+        );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor = const Color(0xFF88C3C7);
-
     return Container(
       width: double.infinity,
-      color: darkColor, // El color cubre toda la parte superior
+      color: AppColors.darkTopBar,
       child: SafeArea(
-        // SafeArea evita que el contenido toque la barra de estado/notch
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.grey[600],
-                radius: 22,
-                child: const Text(
-                  "logo",
-                  style: TextStyle(fontSize: 10, color: Colors.black),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  height: 35,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  alignment: Alignment.centerLeft,
-                  child: const Text(
-                    "Sistema de gestión citas medicas",
-                    style: TextStyle(
-                      fontFamily: 'Courier',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13, // Ajustado para evitar overflow
+              SizedBox(
+                height: 44,
+                child: Row(
+                  children: [
+                    CustomPaint(
+                      size: const Size(22, 22),
+                      painter: ClinicLogoCrossHeartPainter(
+                        color: AppColors.accentColor,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "CLÍNICA",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.accentColor,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
 
+              Expanded(
+                child: Container(
+                  height: 35,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  alignment: Alignment.center,
+                  child: AnimatedBuilder(
+                    animation: _textAnimation,
+                    builder: (context, child) {
+                      return FractionalTranslation(
+                        translation: _textAnimation.value,
+                        child: const Text(
+                          "Sistema de gestión citas medicas",
+                          style: TextStyle(
+                            fontFamily: 'Courier',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -257,8 +290,7 @@ class HomeHeader extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.notifications,
-                      color: Colors
-                          .yellow, // O usa AppColors.btnWarning si tienes uno
+                      color: Colors.yellow,
                       size: 30,
                     ),
                     Positioned(
@@ -267,7 +299,7 @@ class HomeHeader extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
-                          color: Colors.red, // O usa AppColors.btnRed
+                          color: Colors.red,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         constraints: const BoxConstraints(
@@ -285,8 +317,6 @@ class HomeHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-
-              // Botón Logout (Con lógica de salida)
               GestureDetector(
                 onTap: () {
                   Navigator.pushAndRemoveUntil(
@@ -294,13 +324,13 @@ class HomeHeader extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => const LoginScreen(),
                     ),
-                    (route) => false, // Borra el historial para no volver atrás
+                    (route) => false,
                   );
                 },
-                child: CircleAvatar(
+                child: const CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.blueGrey,
-                  child: const Icon(
+                  child: Icon(
                     Icons.power_settings_new,
                     size: 20,
                     color: Colors.white,
@@ -315,72 +345,111 @@ class HomeHeader extends StatelessWidget {
   }
 }
 
-// --- TARJETA DE USUARIO ---
+class ClinicLogoCrossHeartPainter extends CustomPainter {
+  final Color color;
+  ClinicLogoCrossHeartPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final double mid = size.width / 2;
+    const double crossSize = 6.0;
+
+    final Path heartPath = Path()
+      ..moveTo(mid, size.height * 0.25)
+      ..cubicTo(
+        size.width * 0.9,
+        -size.height * 0.1,
+        size.width * 1.3,
+        size.height * 0.6,
+        mid,
+        size.height,
+      )
+      ..cubicTo(
+        -size.width * 0.3,
+        size.height * 0.6,
+        size.width * 0.1,
+        -size.height * 0.1,
+        mid,
+        size.height * 0.25,
+      )
+      ..close();
+    canvas.drawPath(heartPath, paint);
+
+    final Paint crossPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(
+      Rect.fromLTWH(
+        mid - (crossSize * 0.8),
+        size.height * 0.45,
+        crossSize * 1.6,
+        crossSize * 0.3,
+      ),
+      crossPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(
+        mid - (crossSize * 0.15),
+        size.height * 0.35,
+        crossSize * 0.3,
+        crossSize,
+      ),
+      crossPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class UserCard extends StatelessWidget {
   final Map<String, String> userData;
-  final Color cardColor;
-
-  const UserCard({super.key, required this.userData, required this.cardColor});
+  const UserCard({super.key, required this.userData});
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor = const Color(0xFF88C3C7);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Container(
-        padding: const EdgeInsets.all(15),
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(5),
+          color: AppColors.homeCard,
+          borderRadius: BorderRadius.circular(15),
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: accentColor, width: 4),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                "Imagen",
-                style: TextStyle(fontFamily: 'Courier'),
+            const Text(
+              "Datos del usuario:",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Courier',
+                fontSize: 16,
               ),
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Datos del usuario:",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Courier',
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "Usuario: ${userData['nombre']}",
-                    style: const TextStyle(fontFamily: 'Courier'),
-                  ),
-                  Text(
-                    "Cedula: ${userData['cedula']}",
-                    style: const TextStyle(fontFamily: 'Courier'),
-                  ),
-                  Text(
-                    "Rol: ${userData['rol']}",
-                    style: const TextStyle(fontFamily: 'Courier'),
-                  ),
-                  Text(
-                    "cod: ${userData['codigo']}",
-                    style: const TextStyle(fontFamily: 'Courier'),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 10),
+            Text(
+              "Usuario: ${userData['nombre']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
+            Text(
+              "Correo: ${userData['correo']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
+            Text(
+              "Rol: ${userData['rol']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
+            Text(
+              "cod: ${userData['codigo']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
             ),
           ],
         ),
@@ -389,10 +458,8 @@ class UserCard extends StatelessWidget {
   }
 }
 
-// --- BARRA DE BÚSQUEDA ---
 class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
-
   const CustomSearchBar({super.key, required this.controller});
 
   @override
@@ -438,61 +505,91 @@ class CustomSearchBar extends StatelessWidget {
   }
 }
 
-// --- GRID DE MENÚ ---
 class MenuGrid extends StatelessWidget {
-  final Color cardColor;
   final Function(String) onOptionTap;
+  final TextEditingController searchController;
+  final String rolUsuario;
 
   const MenuGrid({
     super.key,
-    required this.cardColor,
     required this.onOptionTap,
+    required this.searchController,
+    required this.rolUsuario,
   });
 
   @override
   Widget build(BuildContext context) {
-    final List<String> menuOptions = [
-      "Agenda",
-      "Registrar Cita",
-      "Usuarios",
-      "Configuración de\nhorario",
-      "Restricciones de\nhorario",
-      "Gestión de Pacientes",
-      "Reportes",
-      
-    ];
+    List<String> baseMenuOptions = [];
+
+    if (rolUsuario == 'Recepcionista') {
+      baseMenuOptions = ["Agenda", "Registrar Cita", "Gestión de Pacientes"];
+    } else {
+      baseMenuOptions = [
+        "Agenda",
+        "Registrar Cita",
+        "Usuarios",
+        "Configuración de\nhorario",
+        "Restricciones de\nhorario",
+        "Gestión de Pacientes",
+        "Reportes",
+      ];
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: GridView.builder(
-        padding: const EdgeInsets.only(top: 0, bottom: 20),
-        itemCount: menuOptions.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.5,
-        ),
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => onOptionTap(menuOptions[index]),
-            child: Container(
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              alignment: Alignment.center,
+      child: ListenableBuilder(
+        listenable: searchController,
+        builder: (context, _) {
+          final String query = searchController.text.toLowerCase().trim();
+
+          final List<String> filteredOptions = baseMenuOptions.where((option) {
+            final normalizedOption = option.replaceAll("\n", " ").toLowerCase();
+            return normalizedOption.contains(query);
+          }).toList();
+
+          if (filteredOptions.isEmpty) {
+            return const Center(
               child: Text(
-                menuOptions[index],
-                textAlign: TextAlign.center,
-                style: const TextStyle(
+                "No se encontraron resultados",
+                style: TextStyle(
                   fontFamily: 'Courier',
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Colors.black87,
                 ),
               ),
+            );
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.only(top: 0, bottom: 20),
+            itemCount: filteredOptions.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.5,
             ),
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () => onOptionTap(filteredOptions[index]),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.homeCard,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    filteredOptions[index],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Courier',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
