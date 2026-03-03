@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sistema_citas_medicas/core/database/database_helper.dart';
 // import 'package:sistema_citas_medicas/core/database/database_helper.dart'; // Comentado temporalmente si te da error de que no existe aún
 
 class ReportesViewModel extends ChangeNotifier {
@@ -55,9 +56,6 @@ class ReportesViewModel extends ChangeNotifier {
     await Future.delayed(const Duration(seconds: 1));
 
     try {
-      // =========================================================
-      // TODO: DESCOMENTAR ESTO CUANDO LA BD FUNCIONE Y BORRAR EL MOCK
-      /*
       final db = await DatabaseHelper.instance.database;
       
       String fechaDesdeStr = _formatForDB(_desdeDateTime);
@@ -69,19 +67,19 @@ class ReportesViewModel extends ChangeNotifier {
         WHERE fecha >= ? AND fecha <= ?
         GROUP BY estado
       ''', [fechaDesdeStr, fechaHastaStr]);
-      */
+      
       // =========================================================
 
       // =========================================================
       // DATOS MOCK: Simulamos lo que respondería SQLite
       // =========================================================
-      final List<Map<String, dynamic>> resultados = [
-        {'estado': 'completada', 'cantidad': 15},
-        {'estado': 'cancelada', 'cantidad': 3},
-        {'estado': 'reagendada', 'cantidad': 2},
-        {'estado': 'en espera', 'cantidad': 8},
-        {'estado': 'no atendida', 'cantidad': 1},
-      ];
+      // final List<Map<String, dynamic>> resultados = [
+      //   {'estado': 'completada', 'cantidad': 15},
+      //   {'estado': 'cancelada', 'cantidad': 3},
+      //   {'estado': 'reagendada', 'cantidad': 2},
+      //   {'estado': 'en espera', 'cantidad': 8},
+      //   {'estado': 'no atendida', 'cantidad': 1},
+      // ];
 
       // Reiniciamos contadores
       totalCitas = 0;
@@ -91,7 +89,7 @@ class ReportesViewModel extends ChangeNotifier {
       enEspera = 0;
       noAtendidas = 0;
 
-      // Procesamos los resultados de la BD (¡Tu lógica intacta!)
+      // Procesamos los resultados de la BD 
       for (var fila in resultados) {
         String estado = fila['estado'].toString().toLowerCase();
         int cantidad = fila['cantidad'] as int;
@@ -108,11 +106,13 @@ class ReportesViewModel extends ChangeNotifier {
           case 'reagendada':
             reagendadas = cantidad;
             break;
+          case 'ingresada': // <--- AGREGAR ESTO
           case 'en espera':
-            enEspera = cantidad;
+          case 'pendiente':
+            enEspera += cantidad;
             break;
-          case 'no atendida':
-            noAtendidas = cantidad;
+          default:
+            noAtendidas += cantidad;
             break;
         }
       }
@@ -139,32 +139,41 @@ class ReportesViewModel extends ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 500));
 
     try {
-      // =========================================================
-      // TODO: DESCOMENTAR CUANDO LA BD FUNCIONE Y BORRAR EL MOCK
-      /*
-      final db = await DatabaseHelper.instance.database;
-      String fechaDesdeStr = _formatForDB(_desdeDateTime);
-      String fechaHastaStr = _formatForDB(_hastaDateTime);
+        final db = await DatabaseHelper.instance.database;
+        String fechaDesdeStr = _formatForDB(_desdeDateTime);
+        String fechaHastaStr = _formatForDB(_hastaDateTime);
 
-      // Aquí pedimos TODOS los datos (SELECT *), no solo el COUNT
-      _listadoCitasDetalle = await db.rawQuery('''
-        SELECT *
-        FROM cita
-        WHERE fecha >= ? AND fecha <= ?
-        ORDER BY fecha DESC, hora DESC
+    // USAMOS LEFT JOIN y los nombres de tu tabla (id_paciente)
+      final List<Map<String, dynamic>> resultados = await db.rawQuery('''
+        SELECT 
+          c.*, 
+          (p.nombres || ' ' || p.apellidos) as nombre_paciente,
+          u.nombre as nombre_doctor
+        FROM cita c
+        LEFT JOIN paciente p ON c.id_paciente = p.id_paciente
+        LEFT JOIN usuario u ON c.creada_por = u.id_usuario
+        WHERE c.fecha BETWEEN ? AND ?
+        ORDER BY c.fecha ASC, c.hora_inicio ASC
       ''', [fechaDesdeStr, fechaHastaStr]);
-      */
+      _listadoCitasDetalle = resultados;
+      
+      // DEBUG: Mira esto en tu consola para ver qué está llegando
+      print("Citas en lista: ${_listadoCitasDetalle.length}");
+      if (_listadoCitasDetalle.isNotEmpty) {
+        print("Primer estado: ${_listadoCitasDetalle[0]['estado']}");
+      }
+      
       // =========================================================
 
       // =========================================================
       // DATOS MOCK: Simulamos el detalle de las citas
       // =========================================================
-      _listadoCitasDetalle = [
-        {'id': 101, 'paciente': 'Juan Pérez', 'fecha': '2026-03-02', 'hora': '09:00', 'estado': 'Completada', 'doctor': 'Dra. García'},
-        {'id': 102, 'paciente': 'María López', 'fecha': '2026-03-02', 'hora': '10:30', 'estado': 'Cancelada', 'doctor': 'Dr. Rodríguez'},
-        {'id': 103, 'paciente': 'Carlos Ruiz', 'fecha': '2026-03-03', 'hora': '14:00', 'estado': 'En espera', 'doctor': 'Dra. García'},
-        {'id': 104, 'paciente': 'Ana Martínez', 'fecha': '2026-03-03', 'hora': '16:15', 'estado': 'Completada', 'doctor': 'Dra. Gómez'},
-      ];
+      // _listadoCitasDetalle = [
+      //   {'id': 101, 'paciente': 'Juan Pérez', 'fecha': '2026-03-02', 'hora': '09:00', 'estado': 'Completada', 'doctor': 'Dra. García'},
+      //   {'id': 102, 'paciente': 'María López', 'fecha': '2026-03-02', 'hora': '10:30', 'estado': 'Cancelada', 'doctor': 'Dr. Rodríguez'},
+      //   {'id': 103, 'paciente': 'Carlos Ruiz', 'fecha': '2026-03-03', 'hora': '14:00', 'estado': 'En espera', 'doctor': 'Dra. García'},
+      //   {'id': 104, 'paciente': 'Ana Martínez', 'fecha': '2026-03-03', 'hora': '16:15', 'estado': 'Completada', 'doctor': 'Dra. Gómez'},
+      // ];
 
     } catch (e) {
       debugPrint("Error al cargar listado: $e");

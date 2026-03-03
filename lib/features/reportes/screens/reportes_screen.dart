@@ -108,10 +108,24 @@ class _ReportesView extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final cita = citas[index];
                           
-                          // Lógica de color visual rápida
-                          Color colorEstado = Colors.blueGrey;
-                          if(cita['estado'].toString().toLowerCase() == 'completada') colorEstado = Colors.green;
-                          if(cita['estado'].toString().toLowerCase() == 'cancelada') colorEstado = Colors.red;
+                          // LÓGICA DE ESTADOS Y COLORES
+                          final String estadoBD = (cita['estado'] ?? '').toString().toLowerCase();
+                          Color colorEstado = Colors.grey;
+                          String textoMostrar = "NO ATENDIDA";
+
+                          if (estadoBD == 'completada') {
+                            colorEstado = Colors.green;
+                            textoMostrar = "COMPLETADA";
+                          } else if (estadoBD == 'cancelada') {
+                            colorEstado = Colors.red;
+                            textoMostrar = "CANCELADA";
+                          } else if (estadoBD == 'reagendada') {
+                            colorEstado = Colors.orange;
+                            textoMostrar = "REAGENDADA";
+                          } else if (estadoBD == 'ingresada' || estadoBD == 'en espera') {
+                            colorEstado = Colors.orange;
+                            textoMostrar = "EN ESPERA";
+                          }
 
                           return Card(
                             elevation: 0,
@@ -125,8 +139,19 @@ class _ReportesView extends StatelessWidget {
                                 backgroundColor: colorEstado.withOpacity(0.1),
                                 child: Icon(Icons.person, color: colorEstado),
                               ),
-                              title: Text("${cita['paciente']}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text("Dr: ${cita['doctor']}\n${cita['fecha']} | ${cita['hora']}"),
+                              title: Text(
+                                "${cita['nombre_paciente'] ?? 'Paciente ID: ${cita['id_paciente']}'}", 
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  "Dr: ${cita['nombre_doctor'] ?? 'No asignado'}\n"
+                                  "Fecha: ${cita['fecha']}\n"
+                                  "Hora: ${cita['hora_inicio']} - ${cita['hora_fin']}",
+                                  style: const TextStyle(fontSize: 12, height: 1.3),
+                                ),
+                              ),
                               trailing: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -134,8 +159,8 @@ class _ReportesView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  "${cita['estado']}",
-                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                  textoMostrar,
+                                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                                 ),
                               ),
                               isThreeLine: true,
@@ -262,7 +287,6 @@ class _ReportesView extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         ),
                         onPressed: () async {
-                          // Llamamos a la carga de datos mock del viewmodel
                           await viewModel.cargarListadoDetalle();
                           if (context.mounted) {
                             _mostrarModalListado(context, viewModel.listadoCitasDetalle);
