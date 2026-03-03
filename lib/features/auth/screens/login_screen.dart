@@ -1,57 +1,73 @@
 import 'package:flutter/material.dart';
+// Asegúrate de que estas rutas coincidan exactamente con tu estructura de carpetas
 import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
+import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
+import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Login Médico',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const LoginScreen(),
-    );
-  }
-}
-
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _userController = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
+  final AuthViewModel _viewModel = AuthViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel.inicializarApp();
+  }
+
+  @override
+  void dispose() {
+    _userController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() async {
+    final user = _userController.text.trim();
+    final pass = _passController.text.trim();
+
+    if (user.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor rellene todos los campos")),
+      );
+      return;
+    }
+
+    final usuarioValido = await _viewModel.autenticar(user, pass);
+
+    if (usuarioValido != null && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(idUsuario: usuarioValido.idUsuario),
+        ),
+        (route) => false,
+      );
+    } else if (_viewModel.errorMessage != null && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Definición de colores aproximados basados en la imagen
-
-    final Color backgroundColor = const Color(
-      0xFF95AAB4,
-    ); // Gris azulado de fondo
-    final Color cardColor = const Color(0xFFD9D9D9); // Gris claro de la tarjeta
-    final Color inputColor = const Color(
-      0xFF9FBCC8,
-    ); // Azul grisáceo de los inputs
-    final Color buttonColor = const Color(
-      0xFF72AEC6,
-    ); // Azul más fuerte del botón
-    final Color topBarColor = const Color(0xFF464541); // Barra superior oscura
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.altBackground,
       body: Column(
         children: [
           // 1. Barra superior oscura
-          Container(
-            height: 40, // Altura aproximada de la barra superior
-            color: topBarColor,
-          ),
+          Container(height: 40, color: AppColors.darkTopBar),
 
-          // Espacio expandible para centrar el contenido verticalmente
           Expanded(
             child: SingleChildScrollView(
-              // Permite scroll si el teclado tapa la pantalla
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
@@ -66,7 +82,7 @@ class LoginScreen extends StatelessWidget {
                         horizontal: 20,
                       ),
                       decoration: BoxDecoration(
-                        color: inputColor,
+                        color: AppColors.inputFill,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -75,8 +91,7 @@ class LoginScreen extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          fontFamily:
-                              'Courier', // Fuente tipo máquina de escribir
+                          fontFamily: 'Courier',
                         ),
                       ),
                     ),
@@ -86,22 +101,17 @@ class LoginScreen extends StatelessWidget {
                     // 3. Tarjeta Central (Card)
                     Container(
                       width: double.infinity,
-                      constraints: const BoxConstraints(
-                        maxWidth: 400,
-                      ), // Ancho máximo
+                      constraints: const BoxConstraints(maxWidth: 400),
                       padding: const EdgeInsets.symmetric(
                         vertical: 40,
                         horizontal: 30,
                       ),
                       decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(
-                          30,
-                        ), // Bordes redondeados
+                        color: AppColors.loginCard,
+                        borderRadius: BorderRadius.circular(30),
                       ),
                       child: Column(
                         children: [
-                          // Icono de Usuario
                           Icon(
                             Icons.account_circle_outlined,
                             size: 120,
@@ -112,16 +122,18 @@ class LoginScreen extends StatelessWidget {
 
                           // Campo: Ingresar usuario
                           _buildCustomTextField(
+                            controller: _userController,
                             hintText: "Ingresar usuario",
-                            fillColor: inputColor,
+                            fillColor: AppColors.inputFill,
                           ),
 
                           const SizedBox(height: 20),
 
                           // Campo: Ingresar contraseña
                           _buildCustomTextField(
+                            controller: _passController,
                             hintText: "Ingresar contraseña",
-                            fillColor: inputColor,
+                            fillColor: AppColors.inputFill,
                             obscureText: true,
                           ),
 
@@ -129,35 +141,41 @@ class LoginScreen extends StatelessWidget {
 
                           // Botón Ingresar
                           SizedBox(
-                            width: 200, // Ancho del botón
+                            width: 200,
                             height: 45,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomeScreen(),
+                            child: ListenableBuilder(
+                              listenable: _viewModel,
+                              builder: (context, _) {
+                                return ElevatedButton(
+                                  onPressed: _viewModel.isLoading
+                                      ? null
+                                      : _handleLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.buttonPrimary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    elevation: 0,
                                   ),
-                                  (route) =>
-                                      false, // Esto borra todo el historial anterior (el Login)
+                                  child: _viewModel.isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          "Ingresar",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
                                 );
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: buttonColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                elevation:
-                                    0, // Sin sombra para que se vea plano como el diseño
-                              ),
-                              child: const Text(
-                                "Ingresar",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
                             ),
                           ),
                         ],
@@ -174,8 +192,8 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // Widget personalizado para los campos de texto
   Widget _buildCustomTextField({
+    required TextEditingController controller,
     required String hintText,
     required Color fillColor,
     bool obscureText = false,
@@ -186,8 +204,9 @@ class LoginScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscureText,
-        textAlign: TextAlign.center, // Texto centrado como en la imagen
+        textAlign: TextAlign.center,
         style: const TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.black54,
@@ -200,7 +219,7 @@ class LoginScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
             fontFamily: 'Courier',
           ),
-          border: InputBorder.none, // Quita la línea inferior por defecto
+          border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15),
         ),
       ),
