@@ -69,10 +69,9 @@ class _AgendaViewState extends State<AgendaView> {
         return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => destino),
-    ).then((_) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => destino)).then((
+      _,
+    ) {
       context.read<CitaViewModel>().cargarCitas();
     });
   }
@@ -104,7 +103,7 @@ class _AgendaViewState extends State<AgendaView> {
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
-                      )
+                      ),
                     ],
                   ),
                   alignment: Alignment.center,
@@ -125,7 +124,9 @@ class _AgendaViewState extends State<AgendaView> {
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
                     child: Column(
                       children: [
                         Container(
@@ -137,7 +138,7 @@ class _AgendaViewState extends State<AgendaView> {
                                 color: Colors.black.withOpacity(0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
-                              )
+                              ),
                             ],
                           ),
                           padding: const EdgeInsets.all(20),
@@ -166,7 +167,7 @@ class _AgendaViewState extends State<AgendaView> {
                                 color: Colors.black.withOpacity(0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
-                              )
+                              ),
                             ],
                           ),
                           child: const Text(
@@ -183,21 +184,17 @@ class _AgendaViewState extends State<AgendaView> {
                         if (vm.citasFiltradas.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(20.0),
-                            child: Text(
-                                "No hay citas para este filtro."),
+                            child: Text("No hay citas para este filtro."),
                           )
                         else
                           ...vm.citasFiltradas.map((cita) {
                             return AgendaAppointmentCard(
                               data: {
-                                'fecha':
-                                    _formatearFecha(cita['fecha']),
+                                'fecha': _formatearFecha(cita['fecha']),
                                 'hora':
                                     "${cita['hora_inicio']} - ${cita['hora_fin']}",
-                                'paciente':
-                                    cita['nombre_paciente'] ?? '—',
-                                'estado':
-                                    cita['estado'] ?? '—',
+                                'paciente': cita['nombre_paciente'] ?? '—',
+                                'estado': cita['estado'] ?? '—',
                               },
                               onAction: (accion) =>
                                   _manejarAccion(accion, cita),
