@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/citas_viewmodel.dart';
 import '../widgets/app_header.dart';
 import '../widgets/registrar_cita_widgets/form_label_field.dart';
 import '../widgets/registrar_cita_widgets/custom_input_container.dart';
+import '../widgets/registrar_cita_widgets/paciente_selector.dart';
+import '../widgets/registrar_cita_widgets/hora_selector.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 
 class RegistrarCitaView extends StatefulWidget {
@@ -12,33 +16,46 @@ class RegistrarCitaView extends StatefulWidget {
 }
 
 class _RegistrarCitaViewState extends State<RegistrarCitaView> {
-  //VARIABLES DE ESTADO
-  String? _selectedPaciente;
-  String? _selectedFranja;
-  String? _selectedEstado;
-  
-  // Iniciamos la fecha con el día de hoy
-  DateTime _fechaSeleccionada = DateTime.now();
+  final TextEditingController _observacionController = TextEditingController();
 
-  // --- LÓGICA DEL CALENDARIO ---
-  Future<void> _abrirCalendario() async {
-    final DateTime? fechaEscogida = await showDatePicker(
+  // TODO: Reemplazar con el id del usuario logueado cuando integres el módulo de auth
+  static const int _idUsuarioActual = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cargamos pacientes y franjas al abrir la vista
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CitaViewModel>().inicializarRegistro();
+    });
+  }
+
+  @override
+  void dispose() {
+    _observacionController.dispose();
+    super.dispose();
+  }
+
+  // ─────────────────────────────────────────
+  // CALENDARIO
+  // ─────────────────────────────────────────
+
+  Future<void> _abrirCalendario(CitaViewModel vm) async {
+    final fechaEscogida = await showDatePicker(
       context: context,
-      initialDate: _fechaSeleccionada, // Fecha que aparece marcada al abrir
-      firstDate: DateTime(2020),       // Fecha mínima permitida
-      lastDate: DateTime(2030),        // Fecha máxima permitida
+      initialDate: vm.fechaSeleccionada,
+      firstDate: DateTime.now(), // No permite fechas pasadas
+      lastDate: DateTime(2030),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppColors.fieldBlue, // Color de la cabecera del calendario
-              onPrimary: Colors.white,      // Color del texto de la cabecera
-              onSurface: Colors.black,      // Color de los números
+              primary: AppColors.fieldBlue,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.btnGreen, // Color de botones "Aceptar/Cancelar"
-              ),
+              style: TextButton.styleFrom(foregroundColor: AppColors.btnGreen),
             ),
           ),
           child: child!,
@@ -46,17 +63,53 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
       },
     );
 
-    if (fechaEscogida != null && fechaEscogida != _fechaSeleccionada) {
-      setState(() {
-        _fechaSeleccionada = fechaEscogida;
-      });
+    if (fechaEscogida != null) {
+      vm.setFecha(fechaEscogida);
     }
   }
 
+  // ─────────────────────────────────────────
+  // GUARDAR
+  // ─────────────────────────────────────────
+
+  Future<void> _guardar(CitaViewModel vm) async {
+    vm.setObservacion(_observacionController.text.trim());
+
+    final exito = await vm.guardarCita(_idUsuarioActual);
+
+    if (!mounted) return;
+
+    if (exito) {
+      _observacionController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cita registrada correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(vm.errorMessage ?? 'Error al guardar la cita'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    // Formateo simple de la fecha para mostrarla (dd/mm/aaaa)
-    String textoFecha = "${_fechaSeleccionada.day}/${_fechaSeleccionada.month}/${_fechaSeleccionada.year}";
+    final vm = context.watch<CitaViewModel>();
+
+    final textoFecha =
+        "${vm.fechaSeleccionada.day.toString().padLeft(2, '0')}/"
+        "${vm.fechaSeleccionada.month.toString().padLeft(2, '0')}/"
+        "${vm.fechaSeleccionada.year}";
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -65,191 +118,204 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
           const AppHeader(title: "Inicio / Registrar Cita"),
 
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.cardBg,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      margin: const EdgeInsets.only(bottom: 20),
+            child: vm.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.fieldBlue,
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.cardBg,
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      child: const Text(
-                        "Registrar Cita",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          // ── Título ──
+                          _buildTitulo("Registrar Cita"),
 
-                    // 1. PACIENTE
-                    FormLabelField(
-                      label: "Paciente",
-                      child: CustomInputContainer(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedPaciente,
-                            hint: const Text("Buscar Paciente"),
-                            isExpanded: true,
-                            items: const [
-                              DropdownMenuItem(value: "1", child: Text("Juan Perez")),
-                              DropdownMenuItem(value: "2", child: Text("Maria Lopez")),
-                              DropdownMenuItem(value: "3", child: Text("Carlos Ruiz")),
+                          // ── 1. Paciente (con buscador) ──
+                          const PacienteSelector(),
+
+                          const SizedBox(height: 10),
+
+                          // ── 2. Cédula (auto) ──
+                          FormLabelField(
+                            label: "Cédula",
+                            child: CustomInputContainer(
+                              isReadOnly: true,
+                              child: Text(
+                                vm.pacienteSeleccionado?.cedula ?? '—',
+                              ),
+                            ),
+                          ),
+
+                          // ── 3. Teléfono (auto) ──
+                          FormLabelField(
+                            label: "Teléfono",
+                            child: CustomInputContainer(
+                              isReadOnly: true,
+                              child: Text(
+                                vm.pacienteSeleccionado?.telefono ?? '—',
+                              ),
+                            ),
+                          ),
+
+                          // ── 4. Fecha ──
+                          FormLabelField(
+                            label: "Fecha",
+                            child: CustomInputContainer(
+                              onTap: () => _abrirCalendario(vm),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(textoFecha),
+                                  const Icon(Icons.calendar_today, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // ── 5. Franja Horaria ──
+                          FormLabelField(
+                            label: "Franja Horaria",
+                            child: HoraSelector(),
+                          ),
+
+                          // ── 6. Estado ──
+                          FormLabelField(
+                            label: "Estado",
+                            child: CustomInputContainer(
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: vm.estadoCita,
+                                  isExpanded: true,
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: "Ingresada",
+                                      child: Text("Ingresada"),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: "Reagendada",
+                                      child: Text("Reagendada"),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: "Cancelada",
+                                      child: Text("Cancelada"),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: "Completada",
+                                      child: Text("Completada"),
+                                    ),
+                                  ],
+                                  onChanged: (v) {
+                                    if (v != null) vm.setEstado(v);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // ── 7. Observación ──
+                          _buildTitulo("Observación"),
+                          const SizedBox(height: 10),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: TextField(
+                              controller: _observacionController,
+                              maxLines: 3,
+                              minLines: 1,
+                              decoration: InputDecoration(
+                                hintText: "Escriba una descripción...",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 10,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 30),
+
+                          // ── Botones ──
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: vm.formularioValido
+                                      ? AppColors.btnGreen
+                                      : Colors.grey,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 30,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                onPressed: vm.isLoading || !vm.formularioValido
+                                    ? null
+                                    : () => _guardar(vm),
+                                child: vm.isLoading
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text("Guardar"),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.btnRed,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 30,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancelar"),
+                              ),
                             ],
-                            onChanged: (v) => setState(() => _selectedPaciente = v),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-
-                    // 2. CÉDULA
-                    const FormLabelField(
-                      label: "Cédula",
-                      child: CustomInputContainer(
-                        isReadOnly: true,
-                        child: Text("[Auto: 0912345678]"),
-                      ),
-                    ),
-
-                    // 3. TELÉFONO
-                    const FormLabelField(
-                      label: "Teléfono:",
-                      child: CustomInputContainer(
-                        isReadOnly: true,
-                        child: Text("[Auto: 0998765432]"),
-                      ),
-                    ),
-
-                    // 4. FECHA 
-                    FormLabelField(
-                      label: "Fecha:",
-                      child: CustomInputContainer(
-                        onTap: _abrirCalendario, // Abre el calendario al tocar el campo
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(textoFecha), // Muestra la variable actualizada
-                            const Icon(Icons.calendar_today, size: 18),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // 5. FRANJA HORARIA
-                    FormLabelField(
-                      label: "Franja Horaria",
-                      child: CustomInputContainer(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedFranja,
-                            hint: const Text("[Seleccionar]"),
-                            isExpanded: true,
-                            items: const [
-                              DropdownMenuItem(value: "AM", child: Text("10:00 - 10:20")),
-                              DropdownMenuItem(value: "PM", child: Text("14:00 - 14:20")),
-                            ],
-                            onChanged: (v) => setState(() => _selectedFranja = v),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // 6. ESTADO
-                    FormLabelField(
-                      label: "Estado:",
-                      child: CustomInputContainer(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedEstado,
-                            hint: const Text("[Ingresada]"),
-                            isExpanded: true,
-                            items: const [
-                              DropdownMenuItem(value: "ING", child: Text("Ingresada")),
-                              DropdownMenuItem(value: "CNF", child: Text("Confirmada")),
-                              DropdownMenuItem(value: "CAN", child: Text("Cancelada")),
-                            ],
-                            onChanged: (v) => setState(() => _selectedEstado = v),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // 7. OBSERVACIÓN
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.fieldBlue,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text("Observación", style: TextStyle(fontWeight: FontWeight.w500)),
-                    ),
-                    const SizedBox(height: 10),
-                    
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: TextField(
-                        maxLines: 3,
-                        minLines: 1,
-                        decoration: InputDecoration(
-                          hintText: "Escriba una descripción...",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // --- BOTONES ---
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.btnGreen,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                          ),
-                          onPressed: () {},
-                          child: const Text("Guardar"),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.btnRed,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text("Cancelar"),
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────
+  // HELPER WIDGET
+  // ─────────────────────────────────────────
+
+  Widget _buildTitulo(String texto) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.fieldBlue,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        texto,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
     );
   }

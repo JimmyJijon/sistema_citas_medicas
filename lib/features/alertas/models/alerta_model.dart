@@ -1,5 +1,3 @@
-// lib/features/alertas/models/alerta_model.dart
-
 class Alerta {
   final int idAlerta;
   final int idCita; // FK
