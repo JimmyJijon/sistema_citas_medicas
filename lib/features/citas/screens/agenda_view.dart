@@ -48,33 +48,24 @@ class _AgendaViewState extends State<AgendaView> {
     }
   }
 
-  void _manejarAccion(String accion, Map<String, dynamic> cita) {
-    context.read<CitaViewModel>().setCitaSeleccionada(cita);
+  Future<void> _manejarAccion(String accion, Map<String, dynamic> cita) async {
+    await context.read<CitaViewModel>().setCitaSeleccionada(cita);
+
+    if (!mounted) return;
 
     Widget destino;
     switch (accion) {
-      case "ver":
-        destino = const DetalleCitaView();
-        break;
-      case "reagendar":
-        destino = const ReagendarCitaView();
-        break;
-      case "completar":
-        destino = const MarcarCitaView();
-        break;
-      case "cancelar":
-        destino = const CancelarCitaView();
-        break;
-      default:
-        return;
+      case "ver":       destino = const DetalleCitaView();   break;
+      case "reagendar": destino = const ReagendarCitaView(); break;
+      case "completar": destino = const MarcarCitaView();    break;
+      case "cancelar":  destino = const CancelarCitaView();  break;
+      default: return;
     }
 
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => destino),
-    ).then((_) {
-      context.read<CitaViewModel>().cargarCitas();
-    });
+    ).then((_) => context.read<CitaViewModel>().cargarCitas());
   }
 
   @override
@@ -110,10 +101,7 @@ class _AgendaViewState extends State<AgendaView> {
                   alignment: Alignment.center,
                   child: const Text(
                     "Volver",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                 ),
               ),
@@ -124,10 +112,10 @@ class _AgendaViewState extends State<AgendaView> {
             child: vm.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     child: Column(
                       children: [
+                        // Filtros
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -144,16 +132,17 @@ class _AgendaViewState extends State<AgendaView> {
                           child: AgendaFilters(
                             fechaDesde: vm.filtroDesde,
                             fechaHasta: vm.filtroHasta,
-                            estadoSeleccionado: vm.filtroEstado,
+                            estadosSeleccionados: vm.filtroEstados,
                             onTapDesde: () => _seleccionarFecha(true),
                             onTapHasta: () => _seleccionarFecha(false),
-                            onChangedEstado: vm.setFiltroEstado,
+                            onToggleEstado: vm.toggleFiltroEstado,
                             onChangedPaciente: vm.setFiltroPaciente,
                           ),
                         ),
 
                         const SizedBox(height: 25),
 
+                        // Título lista
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -169,10 +158,12 @@ class _AgendaViewState extends State<AgendaView> {
                               )
                             ],
                           ),
-                          child: const Text(
-                            "Listado de Citas",
+                          child: Text(
+                            vm.filtroEstados.isEmpty
+                                ? "Listado de Citas"
+                                : "Listado de Citas (${vm.citasFiltradas.length})",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                               color: Colors.black87,
@@ -180,27 +171,22 @@ class _AgendaViewState extends State<AgendaView> {
                           ),
                         ),
 
+                        // Lista
                         if (vm.citasFiltradas.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(20.0),
-                            child: Text(
-                                "No hay citas para este filtro."),
+                            child: Text("No hay citas para este filtro."),
                           )
                         else
                           ...vm.citasFiltradas.map((cita) {
                             return AgendaAppointmentCard(
                               data: {
-                                'fecha':
-                                    _formatearFecha(cita['fecha']),
-                                'hora':
-                                    "${cita['hora_inicio']} - ${cita['hora_fin']}",
-                                'paciente':
-                                    cita['nombre_paciente'] ?? '—',
-                                'estado':
-                                    cita['estado'] ?? '—',
+                                'fecha': _formatearFecha(cita['fecha']),
+                                'hora': "${cita['hora_inicio']} - ${cita['hora_fin']}",
+                                'paciente': cita['nombre_paciente'] ?? '—',
+                                'estado': cita['estado'] ?? '—',
                               },
-                              onAction: (accion) =>
-                                  _manejarAccion(accion, cita),
+                              onAction: (accion) => _manejarAccion(accion, cita),
                             );
                           }).toList(),
 

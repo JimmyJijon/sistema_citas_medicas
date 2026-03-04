@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/features/citas/viewmodels/citas_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import '../widgets/app_header.dart';
 import '../widgets/section_title.dart';
 import '../widgets/detail_info_row.dart';
@@ -20,7 +21,6 @@ class _MarcarCitaViewState extends State<MarcarCitaView> {
   final TextEditingController _observacionController = TextEditingController();
 
   // TODO: Reemplazar con usuario de sesión al integrar auth
-  static const int _idUsuarioActual = 1;
 
   @override
   void dispose() {
@@ -62,7 +62,7 @@ class _MarcarCitaViewState extends State<MarcarCitaView> {
 
     final vm = context.read<CitaViewModel>();
     final exito = await vm.registrarAccionEnHistorial(
-      idUsuario: _idUsuarioActual,
+      idUsuario: context.read<AuthViewModel>().usuarioActual?.idUsuario ?? 1,
       nuevoEstado: 'Completada',
       descripcion: observacion,
     );
@@ -72,7 +72,7 @@ class _MarcarCitaViewState extends State<MarcarCitaView> {
     if (exito) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cita marcada como completada'),
+          content: Text('✅ Cita marcada como completada'),
           backgroundColor: Colors.green,
         ),
       );

@@ -6,20 +6,20 @@ import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 class AgendaFilters extends StatelessWidget {
   final DateTime fechaDesde;
   final DateTime fechaHasta;
-  final String? estadoSeleccionado;
+  final Set<String> estadosSeleccionados;
   final VoidCallback onTapDesde;
   final VoidCallback onTapHasta;
-  final Function(String?) onChangedEstado;
-  final Function(String) onChangedPaciente; // ← conectado
+  final Function(String) onToggleEstado;
+  final Function(String) onChangedPaciente;
 
   const AgendaFilters({
     Key? key,
     required this.fechaDesde,
     required this.fechaHasta,
-    required this.estadoSeleccionado,
+    required this.estadosSeleccionados,
     required this.onTapDesde,
     required this.onTapHasta,
-    required this.onChangedEstado,
+    required this.onToggleEstado,
     required this.onChangedPaciente,
   }) : super(key: key);
 
@@ -31,6 +31,7 @@ class AgendaFilters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Título
         Container(
@@ -94,41 +95,132 @@ class AgendaFilters extends StatelessWidget {
           ),
         ),
 
-        // Filtro Estado — valores reales que guarda el ViewModel
-        FormLabelField(
-          label: "Estado:",
-          child: CustomInputContainer(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String?>(
-                value: estadoSeleccionado,
-                hint: const Text("Todas"),
-                isExpanded: true,
-                icon: const Icon(Icons.arrow_drop_down),
-                items: const [
-                  DropdownMenuItem<String?>(value: null, child: Text("Todas")),
-                  DropdownMenuItem<String?>(
-                    value: "Ingresada",
-                    child: Text("Ingresada"),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: "Completada",
-                    child: Text("Completada"),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: "Reagendada",
-                    child: Text("Reagendada"),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: "Cancelada",
-                    child: Text("Cancelada"),
-                  ),
-                ],
-                onChanged: onChangedEstado,
-              ),
-            ),
+        const SizedBox(height: 10),
+
+        // Filtro Estado — checkboxes
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.fieldBlue,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: const Text(
+            "Filtrar por estado",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
         ),
+        const SizedBox(height: 6),
+
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            _EstadoChip(
+              label: "Ingresada",
+              color: const Color(0xFFFFA726),
+              seleccionado: estadosSeleccionados.contains("Ingresada"),
+              onTap: () => onToggleEstado("Ingresada"),
+            ),
+
+            _EstadoChip(
+              label: "Reagendada",
+              color: const Color(0xFFAB47BC),
+              seleccionado: estadosSeleccionados.contains("Reagendada"),
+              onTap: () => onToggleEstado("Reagendada"),
+            ),
+            _EstadoChip(
+              label: "Completada",
+              color: const Color(0xFF66BB6A),
+              seleccionado: estadosSeleccionados.contains("Completada"),
+              onTap: () => onToggleEstado("Completada"),
+            ),
+            _EstadoChip(
+              label: "Cancelada",
+              color: const Color(0xFFEF5350),
+              seleccionado: estadosSeleccionados.contains("Cancelada"),
+              onTap: () => onToggleEstado("Cancelada"),
+            ),
+          ],
+        ),
+
+        // Indicador de sin filtro activo
+        if (estadosSeleccionados.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              "Mostrando todos los estados",
+              style: TextStyle(fontSize: 11, color: Colors.black45, fontStyle: FontStyle.italic),
+            ),
+          ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// CHIP DE ESTADO CON CHECKBOX VISUAL
+// ─────────────────────────────────────────
+
+class _EstadoChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool seleccionado;
+  final VoidCallback onTap;
+
+  const _EstadoChip({
+    required this.label,
+    required this.color,
+    required this.seleccionado,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: seleccionado ? color.withOpacity(0.15) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: seleccionado ? color : Colors.grey.shade300,
+            width: seleccionado ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: seleccionado ? color : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: seleccionado ? color : Colors.grey.shade400,
+                  width: 1.5,
+                ),
+              ),
+              child: seleccionado
+                  ? const Icon(Icons.check, size: 11, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+                color: seleccionado ? color : Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

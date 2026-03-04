@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/citas_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import '../widgets/app_header.dart';
 import '../widgets/registrar_cita_widgets/form_label_field.dart';
 import '../widgets/registrar_cita_widgets/custom_input_container.dart';
@@ -19,7 +20,6 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
   final TextEditingController _observacionController = TextEditingController();
 
   // TODO: Reemplazar con el id del usuario logueado cuando integres el módulo de auth
-  static const int _idUsuarioActual = 1;
 
   @override
   void initState() {
@@ -55,7 +55,9 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: AppColors.btnGreen),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.btnGreen,
+              ),
             ),
           ),
           child: child!,
@@ -73,9 +75,11 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
   // ─────────────────────────────────────────
 
   Future<void> _guardar(CitaViewModel vm) async {
-    vm.setObservacion(_observacionController.text.trim());
+    final authVm = context.read<AuthViewModel>();
+    final idUsuario = authVm.usuarioActual?.idUsuario ?? 1;
 
-    final exito = await vm.guardarCita(_idUsuarioActual);
+    vm.setObservacion(_observacionController.text.trim());
+    final exito = await vm.guardarCita(idUsuario);
 
     if (!mounted) return;
 
@@ -182,40 +186,6 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                             child: HoraSelector(),
                           ),
 
-                          // ── 6. Estado ──
-                          FormLabelField(
-                            label: "Estado",
-                            child: CustomInputContainer(
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: vm.estadoCita,
-                                  isExpanded: true,
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: "Ingresada",
-                                      child: Text("Ingresada"),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: "Reagendada",
-                                      child: Text("Reagendada"),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: "Cancelada",
-                                      child: Text("Cancelada"),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: "Completada",
-                                      child: Text("Completada"),
-                                    ),
-                                  ],
-                                  onChanged: (v) {
-                                    if (v != null) vm.setEstado(v);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-
                           const SizedBox(height: 10),
 
                           // ── 7. Observación ──
@@ -237,9 +207,7 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                                   borderSide: BorderSide.none,
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 10,
-                                ),
+                                    horizontal: 15, vertical: 10),
                               ),
                             ),
                           ),
@@ -257,9 +225,7 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                                       : Colors.grey,
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 30,
-                                    vertical: 12,
-                                  ),
+                                      horizontal: 30, vertical: 12),
                                 ),
                                 onPressed: vm.isLoading || !vm.formularioValido
                                     ? null
@@ -269,9 +235,8 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                                         width: 18,
                                         height: 18,
                                         child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
+                                            strokeWidth: 2,
+                                            color: Colors.white),
                                       )
                                     : const Text("Guardar"),
                               ),
@@ -280,9 +245,7 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                                   backgroundColor: AppColors.btnRed,
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 30,
-                                    vertical: 12,
-                                  ),
+                                      horizontal: 30, vertical: 12),
                                 ),
                                 onPressed: () => Navigator.pop(context),
                                 child: const Text("Cancelar"),

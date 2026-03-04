@@ -12,6 +12,11 @@ class AuthViewModel extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+    // ── Usuario de sesión activa ──
+  Usuario? _usuarioActual;
+  Usuario? get usuarioActual => _usuarioActual;
+  bool get estaAutenticado => _usuarioActual != null;
+
   // Al iniciar, nos aseguramos de que existan los usuarios
   Future<void> inicializarApp() async {
     await _repository.crearUsuariosPrueba();
@@ -26,9 +31,11 @@ class AuthViewModel extends ChangeNotifier {
       final usuario = await _repository.login(correo, password);
       if (usuario == null) {
         _errorMessage = "Usuario o contraseña incorrectos";
+      } else {
+        _usuarioActual = usuario; // ← guardamos la sesión
       }
       _isLoading = false;
-      notifyListeners();
+      notifyListeners();  
       return usuario;
     } catch (e) {
       _errorMessage = "Error de conexión con la base de datos";

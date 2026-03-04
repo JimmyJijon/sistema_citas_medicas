@@ -40,7 +40,9 @@ class AgendaAppointmentCard extends StatelessWidget {
 // Estados que permiten acciones de gestión
     bool _esGestionable(String estado) =>
         estado == 'Ingresada' || 
-        estado == 'Reagendada';
+        estado == 'Reagendada'||
+        estado == 'Pendiente' 
+        ;
 
   @override
   Widget build(BuildContext context) {

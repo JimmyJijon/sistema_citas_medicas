@@ -17,7 +17,6 @@ class CitaViewModel extends ChangeNotifier {
   DateTime _fechaSeleccionada = DateTime.now();
   String? _horaSeleccionada;
   String _observacion = '';
-  // Estado inicial cuando se crea una nueva cita
   String _estadoCita = 'Ingresada';
 
   // ─────────────────────────────────────────
@@ -27,7 +26,8 @@ class CitaViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> _citasFiltradas = [];
   DateTime _filtroDesde = DateTime.now();
   DateTime _filtroHasta = DateTime.now().add(const Duration(days: 7));
-  String? _filtroEstado;
+  // Set vacío = mostrar todos; con valores = mostrar solo los marcados
+  Set<String> _filtroEstados = {};
   String _filtroPaciente = '';
 
   // ─────────────────────────────────────────
@@ -62,7 +62,7 @@ class CitaViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> get citasFiltradas => _citasFiltradas;
   DateTime get filtroDesde => _filtroDesde;
   DateTime get filtroHasta => _filtroHasta;
-  String? get filtroEstado => _filtroEstado;
+  Set<String> get filtroEstados => _filtroEstados;
 
   // ─────────────────────────────────────────
   // GETTERS — Detalle / Historial
@@ -131,36 +131,12 @@ class CitaViewModel extends ChangeNotifier {
   }
 
   Future<bool> guardarCita(int idUsuarioActual) async {
-    // Si el formulario no es válido, no continúa
     if (!formularioValido) return false;
-
-    _setLoading(true); // Activamos indicador de carga
-
+    _setLoading(true);
     try {
-      // Obtenemos el id del paciente seleccionado
-      final idPaciente = _pacienteSeleccionado!.idPaciente!;
-
-      // ─────────────────────────────────────────
-      // 🔒 VALIDACIÓN: VERIFICAR CITA ACTIVA
-      // ─────────────────────────────────────────
-      final tieneCitaActiva = await _repository.pacienteTieneCitaActiva(
-        idPaciente,
-      );
-
-      // Si ya tiene una cita activa, bloqueamos el registro
-      if (tieneCitaActiva) {
-        _errorMessage = 'El paciente ya tiene una cita Ingresada o Reagendada.';
-
-        _setLoading(false); // Quitamos loading
-        return false; // Retornamos false para que la vista muestre error
-      }
-
-      // ─────────────────────────────────────────
-      // CREACIÓN DE LA NUEVA CITA
-      // ─────────────────────────────────────────
       final nuevaCita = Cita(
-        idCita: 0, // Se elimina en el insert (AUTOINCREMENT)
-        idPaciente: idPaciente,
+        idCita: 0,
+        idPaciente: _pacienteSeleccionado!.idPaciente!,
         fecha: _fechaSeleccionada,
         horaInicio: _horaSeleccionada!,
         horaFin: _calcularHoraFin(_horaSeleccionada!),
@@ -169,22 +145,33 @@ class CitaViewModel extends ChangeNotifier {
         fechaCreacion: DateTime.now(),
       );
 
-      // Insertamos la cita en la base de datos
-      final resultado = await _repository.insertarCita(nuevaCita);
+      // 1. Insertar la cita y obtener el ID generado
+      final idCitaNueva = await _repository.insertarCita(nuevaCita);
 
-      // Si el insert fue exitoso
-      if (resultado > 0) {
-        _limpiarFormulario(); // Limpiamos datos del formulario
+      if (idCitaNueva > 0) {
+        // 2. Insertar en historial con la observación del usuario
+        final descripcion = _observacion.isNotEmpty
+            ? _observacion
+            : 'Cita creada en estado: $_estadoCita';
+
+        await _repository.insertarHistorial(HistorialCita(
+          idHistorial: 0,
+          idCita: idCitaNueva,
+          estado: _estadoCita,
+          descripcion: descripcion,
+          fechaEvento: DateTime.now(),
+          idUsuario: idUsuarioActual,
+        ));
+
+        _limpiarFormulario();
         _setLoading(false);
-        return true; // Éxito
+        return true;
       }
     } catch (e) {
-      // Si ocurre un error inesperado
       _errorMessage = 'Error al guardar la cita: $e';
     }
-
     _setLoading(false);
-    return false; // Si algo falla
+    return false;
   }
 
   // ─────────────────────────────────────────
@@ -213,8 +200,12 @@ class CitaViewModel extends ChangeNotifier {
     _aplicarFiltros();
   }
 
-  void setFiltroEstado(String? estado) {
-    _filtroEstado = estado;
+  void toggleFiltroEstado(String estado) {
+    if (_filtroEstados.contains(estado)) {
+      _filtroEstados.remove(estado);
+    } else {
+      _filtroEstados.add(estado);
+    }
     _aplicarFiltros();
   }
 
@@ -226,36 +217,17 @@ class CitaViewModel extends ChangeNotifier {
   void _aplicarFiltros() {
     _citasFiltradas = _todasLasCitas.where((cita) {
       final fechaCita = DateTime.parse(cita['fecha']);
-      final desde = DateTime(
-        _filtroDesde.year,
-        _filtroDesde.month,
-        _filtroDesde.day,
-      );
-      final hasta = DateTime(
-        _filtroHasta.year,
-        _filtroHasta.month,
-        _filtroHasta.day,
-      );
+      final desde = DateTime(_filtroDesde.year, _filtroDesde.month, _filtroDesde.day);
+      final hasta = DateTime(_filtroHasta.year, _filtroHasta.month, _filtroHasta.day);
       final fecha = DateTime(fechaCita.year, fechaCita.month, fechaCita.day);
 
       if (fecha.isBefore(desde) || fecha.isAfter(hasta)) return false;
-      // ─────────────────────────────────────────
-      // FILTRO POR ESTADO
-      // ─────────────────────────────────────────
-      if (_filtroEstado != null &&
-          _filtroEstado!.isNotEmpty &&
-          _filtroEstado != "Todos") {
-        final estadoCita = (cita['estado'] ?? '').toString().toLowerCase();
-        final estadoFiltro = _filtroEstado!.toLowerCase();
-        if (estadoCita != estadoFiltro) {
-          return false; // No coincide el estado
-        }
-      }
+      // Filtro estados — si el set está vacío muestra todos
+      if (_filtroEstados.isNotEmpty && !_filtroEstados.contains(cita['estado'])) return false;
       if (_filtroPaciente.isNotEmpty) {
         final nombre = (cita['nombre_paciente'] ?? '').toLowerCase();
         final cedula = (cita['cedula'] ?? '').toLowerCase();
-        if (!nombre.contains(_filtroPaciente) &&
-            !cedula.contains(_filtroPaciente)) {
+        if (!nombre.contains(_filtroPaciente) && !cedula.contains(_filtroPaciente)) {
           return false;
         }
       }
@@ -319,16 +291,14 @@ class CitaViewModel extends ChangeNotifier {
       await _repository.actualizarCita(citaActualizada);
 
       // Insertar en historial
-      await _repository.insertarHistorial(
-        HistorialCita(
-          idHistorial: 0,
-          idCita: idCita,
-          estado: 'Reagendada',
-          descripcion: motivo,
-          fechaEvento: DateTime.now(),
-          idUsuario: idUsuario,
-        ),
-      );
+      await _repository.insertarHistorial(HistorialCita(
+        idHistorial: 0,
+        idCita: idCita,
+        estado: 'Reagendada',
+        descripcion: motivo,
+        fechaEvento: DateTime.now(),
+        idUsuario: idUsuario,
+      ));
 
       // Refrescar estado local
       _citaSeleccionada = {
@@ -356,16 +326,14 @@ class CitaViewModel extends ChangeNotifier {
     final idCita = _citaSeleccionada!['id_cita'] as int;
     try {
       await _repository.actualizarEstadoCita(idCita, nuevoEstado);
-      await _repository.insertarHistorial(
-        HistorialCita(
-          idHistorial: 0,
-          idCita: idCita,
-          estado: nuevoEstado,
-          descripcion: descripcion,
-          fechaEvento: DateTime.now(),
-          idUsuario: idUsuario,
-        ),
-      );
+      await _repository.insertarHistorial(HistorialCita(
+        idHistorial: 0,
+        idCita: idCita,
+        estado: nuevoEstado,
+        descripcion: descripcion,
+        fechaEvento: DateTime.now(),
+        idUsuario: idUsuario,
+      ));
       // Refrescar estado local sin ir de nuevo a BD
       _citaSeleccionada = {..._citaSeleccionada!, 'estado': nuevoEstado};
       await _cargarHistorial(idCita);
@@ -405,7 +373,8 @@ class CitaViewModel extends ChangeNotifier {
     _fechaSeleccionada = DateTime.now();
     _horaSeleccionada = null;
     _observacion = '';
-    _estadoCita = 'Ingresada';    _pacientesFiltrados = _todosLosPacientes;
+    _estadoCita = 'Ingresada';
+    _pacientesFiltrados = _todosLosPacientes;
   }
 
   void _setLoading(bool value) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// Asegúrate de que estas rutas coincidan exactamente con tu estructura de carpetas
+import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/features/home/screens/home_screen.dart';
 import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
@@ -14,12 +14,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-  final AuthViewModel _viewModel = AuthViewModel();
 
   @override
   void initState() {
     super.initState();
-    _viewModel.inicializarApp();
+    // Usamos el AuthViewModel del Provider, no uno local
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthViewModel>().inicializarApp();
+    });
   }
 
   @override
@@ -29,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() async {
+  Future<void> _handleLogin() async {
     final user = _userController.text.trim();
     final pass = _passController.text.trim();
 
@@ -40,9 +42,12 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final usuarioValido = await _viewModel.autenticar(user, pass);
+    final vm = context.read<AuthViewModel>();
+    final usuarioValido = await vm.autenticar(user, pass);
 
-    if (usuarioValido != null && mounted) {
+    if (!mounted) return;
+
+    if (usuarioValido != null) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -50,20 +55,22 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         (route) => false,
       );
-    } else if (_viewModel.errorMessage != null && mounted) {
+    } else if (vm.errorMessage != null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
+      ).showSnackBar(SnackBar(content: Text(vm.errorMessage!)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Leemos el vm del Provider para el estado de carga
+    final vm = context.watch<AuthViewModel>();
+
     return Scaffold(
       backgroundColor: AppColors.altBackground,
       body: Column(
         children: [
-          // 1. Barra superior oscura
           Container(height: 40, color: AppColors.darkTopBar),
 
           Expanded(
@@ -75,7 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const SizedBox(height: 40),
 
-                    // 2. Título "Sistema de gestión..."
                     Container(
                       padding: const EdgeInsets.symmetric(
                         vertical: 15,
@@ -98,7 +104,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 40),
 
-                    // 3. Tarjeta Central (Card)
                     Container(
                       width: double.infinity,
                       constraints: const BoxConstraints(maxWidth: 400),
@@ -117,65 +122,52 @@ class _LoginScreenState extends State<LoginScreen> {
                             size: 120,
                             color: Colors.grey[700],
                           ),
-
                           const SizedBox(height: 30),
 
-                          // Campo: Ingresar usuario
                           _buildCustomTextField(
                             controller: _userController,
                             hintText: "Ingresar usuario",
                             fillColor: AppColors.inputFill,
                           ),
-
                           const SizedBox(height: 20),
 
-                          // Campo: Ingresar contraseña
                           _buildCustomTextField(
                             controller: _passController,
                             hintText: "Ingresar contraseña",
                             fillColor: AppColors.inputFill,
                             obscureText: true,
                           ),
-
                           const SizedBox(height: 30),
 
-                          // Botón Ingresar
                           SizedBox(
                             width: 200,
                             height: 45,
-                            child: ListenableBuilder(
-                              listenable: _viewModel,
-                              builder: (context, _) {
-                                return ElevatedButton(
-                                  onPressed: _viewModel.isLoading
-                                      ? null
-                                      : _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.buttonPrimary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
+                            child: ElevatedButton(
+                              onPressed: vm.isLoading ? null : _handleLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.buttonPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: vm.isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Ingresar",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                    elevation: 0,
-                                  ),
-                                  child: _viewModel.isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Text(
-                                          "Ingresar",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                );
-                              },
                             ),
                           ),
                         ],
