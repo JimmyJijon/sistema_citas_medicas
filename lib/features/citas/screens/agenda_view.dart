@@ -95,7 +95,7 @@ class _AgendaViewState extends State<AgendaView> {
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
-                      )
+                      ),
                     ],
                   ),
                   alignment: Alignment.center,
@@ -125,7 +125,7 @@ class _AgendaViewState extends State<AgendaView> {
                                 color: Colors.black.withOpacity(0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
-                              )
+                              ),
                             ],
                           ),
                           padding: const EdgeInsets.all(20),
@@ -155,7 +155,7 @@ class _AgendaViewState extends State<AgendaView> {
                                 color: Colors.black.withOpacity(0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
-                              )
+                              ),
                             ],
                           ),
                           child: Text(

@@ -18,6 +18,7 @@ import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_vi
 import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart';
 import 'package:sistema_citas_medicas/features/home/viewmodels/home_viewmodel.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
@@ -241,12 +242,8 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                 height: 44,
                 child: Row(
                   children: [
-                    CustomPaint(
-                      size: const Size(22, 22),
-                      painter: ClinicLogoCrossHeartPainter(
-                        color: AppColors.accentColor,
-                      ),
-                    ),
+                    // USAMOS EL NUEVO WIDGET AQUÍ
+                    ClinicLogo(size: 22, color: AppColors.accentColor),
                     const SizedBox(width: 8),
                     const Text(
                       "CLÍNICA",
@@ -344,7 +341,7 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                 },
                 child: const CircleAvatar(
                   radius: 18,
-                  backgroundColor: Colors.blueGrey,
+                  backgroundColor: Color(0xFF81C784),
                   child: Icon(
                     Icons.power_settings_new,
                     size: 20,
