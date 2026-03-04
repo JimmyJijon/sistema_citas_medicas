@@ -2,31 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:sistema_citas_medicas/features/alertas/screens/alerts_view.dart';
+import 'package:sistema_citas_medicas/features/alertas/viewmodels/alert_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/agenda_view.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/registrar_cita_view.dart';
 import 'package:sistema_citas_medicas/features/horarios/screens/horario_screen.dart';
 import 'package:sistema_citas_medicas/features/usuarios/screens/usuarios_list_screen.dart';
-
-import 'package:provider/provider.dart'; // Soluciona el error de ChangeNotifierProvider
-import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart'; // Soluciona el error de PacientesViewModel
-import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart'; // Soluciona el error de PacientesListScreen
-
-import 'package:sistema_citas_medicas/features/reportes/screens/reportes_screen.dart'; // Ajusta la ruta si es diferente
-
 import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/pacientes/screens/pacientes_list_screen.dart';
+import 'package:sistema_citas_medicas/features/reportes/screens/reportes_screen.dart';
 import 'package:sistema_citas_medicas/features/home/viewmodels/home_viewmodel.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
 
 // ==========================================
-// 1. PANTALLA PRINCIPAL (LÓGICA Y ESTADO)
+// 1. PANTALLA PRINCIPAL
 // ==========================================
 
 class HomeScreen extends StatefulWidget {
   final int idUsuario;
-
   const HomeScreen({super.key, required this.idUsuario});
 
   @override
@@ -41,6 +35,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _viewModel.cargarUsuario(widget.idUsuario);
+    // Carga inicial del conteo de alertas
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AlertViewModel>().cargarConteo();
+    });
   }
 
   @override
@@ -57,20 +55,18 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const AgendaView()),
-        );
+        ).then((_) => context.read<AlertViewModel>().cargarConteo());
         break;
       case "Registrar Cita":
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const RegistrarCitaView()),
-        );
+        ).then((_) => context.read<AlertViewModel>().cargarConteo());
         break;
       case "Usuarios":
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const GestionUsuariosScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const GestionUsuariosScreen()),
         );
         break;
       case "Configuración de horario":
@@ -90,14 +86,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
         break;
-
       case "Reportes":
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ReportesScreen()),
         );
         break;
-
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -123,15 +117,12 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_viewModel.usuario == null) {
           return Scaffold(
             appBar: AppBar(title: const Text("Error")),
-            body: const Center(
-              child: Text("Error al cargar los datos del usuario"),
-            ),
+            body: const Center(child: Text("Error al cargar los datos del usuario")),
           );
         }
 
         final userData = {
-          "nombre":
-              "${_viewModel.usuario!.nombre} ${_viewModel.usuario!.apellido}",
+          "nombre": "${_viewModel.usuario!.nombre} ${_viewModel.usuario!.apellido}",
           "correo": _viewModel.usuario!.correo,
           "rol": _viewModel.usuario!.rol,
           "codigo": _viewModel.usuario!.idUsuario.toString().padLeft(3, '0'),
@@ -148,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ==========================================
-// 2. LAYOUT PRINCIPAL (DISEÑO ESTRUCTURAL)
+// 2. LAYOUT
 // ==========================================
 
 class HomeLayout extends StatelessWidget {
@@ -189,7 +180,7 @@ class HomeLayout extends StatelessWidget {
 }
 
 // ==========================================
-// 3. WIDGETS INDEPENDIENTES (COMPONENTES)
+// 3. HEADER CON CAMPANITA DINÁMICA
 // ==========================================
 
 class HomeHeaderWidget extends StatefulWidget {
@@ -212,13 +203,10 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
       duration: const Duration(seconds: 10),
     )..repeat();
 
-    _textAnimation =
-        Tween<Offset>(
-          begin: const Offset(1.0, 0.0),
-          end: const Offset(-1.0, 0.0),
-        ).animate(
-          CurvedAnimation(parent: _animationController, curve: Curves.linear),
-        );
+    _textAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: const Offset(-1.0, 0.0),
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.linear));
   }
 
   @override
@@ -229,6 +217,9 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Lee el conteo de alertas pendientes del Provider
+    final totalPendientes = context.watch<AlertViewModel>().totalPendientes;
+
     return Container(
       width: double.infinity,
       color: AppColors.darkTopBar,
@@ -238,11 +229,11 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           child: Row(
             children: [
+              // Logo
               SizedBox(
                 height: 44,
                 child: Row(
                   children: [
-                    // USAMOS EL NUEVO WIDGET AQUÍ
                     ClinicLogo(size: 22, color: AppColors.accentColor),
                     const SizedBox(width: 8),
                     const Text(
@@ -260,6 +251,7 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
               ),
               const SizedBox(width: 10),
 
+              // Texto animado
               Expanded(
                 child: Container(
                   height: 35,
@@ -291,62 +283,66 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                 ),
               ),
               const SizedBox(width: 10),
+
+              // ── Campanita con contador dinámico ──
               GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AlertsView()),
-                  );
+                    MaterialPageRoute(builder: (_) => const AlertsView()),
+                  ).then((_) {
+                    // Refresca conteo al volver de alertas
+                    context.read<AlertViewModel>().cargarConteo();
+                  });
                 },
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const Icon(
-                      Icons.notifications,
-                      color: Colors.yellow,
-                      size: 30,
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 14,
-                          minHeight: 14,
-                        ),
-                        child: const Text(
-                          '1',
-                          style: TextStyle(color: Colors.white, fontSize: 10),
-                          textAlign: TextAlign.center,
+                    const Icon(Icons.notifications, color: Colors.yellow, size: 30),
+                    if (totalPendientes > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            // Muestra "9+" si hay más de 9
+                            totalPendientes > 9 ? '9+' : '$totalPendientes',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
+
+              // Botón cerrar sesión
               GestureDetector(
                 onTap: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
                     (route) => false,
                   );
                 },
                 child: const CircleAvatar(
                   radius: 18,
                   backgroundColor: Color(0xFF81C784),
-                  child: Icon(
-                    Icons.power_settings_new,
-                    size: 20,
-                    color: Colors.white,
-                  ),
+                  child: Icon(Icons.power_settings_new, size: 20, color: Colors.white),
                 ),
               ),
             ],
@@ -356,6 +352,10 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
     );
   }
 }
+
+// ==========================================
+// RESTO DE WIDGETS (sin cambios)
+// ==========================================
 
 class ClinicLogoCrossHeartPainter extends CustomPainter {
   final Color color;
@@ -367,53 +367,17 @@ class ClinicLogoCrossHeartPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
-
     final double mid = size.width / 2;
     const double crossSize = 6.0;
-
     final Path heartPath = Path()
       ..moveTo(mid, size.height * 0.25)
-      ..cubicTo(
-        size.width * 0.9,
-        -size.height * 0.1,
-        size.width * 1.3,
-        size.height * 0.6,
-        mid,
-        size.height,
-      )
-      ..cubicTo(
-        -size.width * 0.3,
-        size.height * 0.6,
-        size.width * 0.1,
-        -size.height * 0.1,
-        mid,
-        size.height * 0.25,
-      )
+      ..cubicTo(size.width * 0.9, -size.height * 0.1, size.width * 1.3, size.height * 0.6, mid, size.height)
+      ..cubicTo(-size.width * 0.3, size.height * 0.6, size.width * 0.1, -size.height * 0.1, mid, size.height * 0.25)
       ..close();
     canvas.drawPath(heartPath, paint);
-
-    final Paint crossPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        mid - (crossSize * 0.8),
-        size.height * 0.45,
-        crossSize * 1.6,
-        crossSize * 0.3,
-      ),
-      crossPaint,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(
-        mid - (crossSize * 0.15),
-        size.height * 0.35,
-        crossSize * 0.3,
-        crossSize,
-      ),
-      crossPaint,
-    );
+    final Paint crossPaint = Paint()..color = color..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(mid - (crossSize * 0.8), size.height * 0.45, crossSize * 1.6, crossSize * 0.3), crossPaint);
+    canvas.drawRect(Rect.fromLTWH(mid - (crossSize * 0.15), size.height * 0.35, crossSize * 0.3, crossSize), crossPaint);
   }
 
   @override
@@ -438,31 +402,12 @@ class UserCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Datos del usuario:",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Courier',
-                fontSize: 16,
-              ),
-            ),
+            const Text("Datos del usuario:", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Courier', fontSize: 16)),
             const SizedBox(height: 10),
-            Text(
-              "Usuario: ${userData['nombre']}",
-              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
-            ),
-            Text(
-              "Correo: ${userData['correo']}",
-              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
-            ),
-            Text(
-              "Rol: ${userData['rol']}",
-              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
-            ),
-            Text(
-              "cod: ${userData['codigo']}",
-              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
-            ),
+            Text("Usuario: ${userData['nombre']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
+            Text("Correo: ${userData['correo']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
+            Text("Rol: ${userData['rol']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
+            Text("cod: ${userData['codigo']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
           ],
         ),
       ),
@@ -479,10 +424,7 @@ class CustomSearchBar extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(25),
-      ),
+      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(25)),
       child: Row(
         children: [
           Icon(Icons.search, color: Colors.cyan[600], size: 30),
@@ -490,19 +432,13 @@ class CustomSearchBar extends StatelessWidget {
           Expanded(
             child: Container(
               height: 35,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
               child: TextField(
                 controller: controller,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 9,
-                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                   hintText: "Buscar...",
                   hintStyle: TextStyle(fontSize: 13, fontFamily: 'Courier'),
                   isDense: true,
@@ -531,49 +467,33 @@ class MenuGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<String> baseMenuOptions = [];
-
-    if (rolUsuario == 'Recepcionista') {
-      baseMenuOptions = ["Agenda", "Registrar Cita", "Gestión de Pacientes"];
-    } else {
-      baseMenuOptions = [
-        "Agenda",
-        "Registrar Cita",
-        "Usuarios",
-        "Configuración de\nhorario",
-        "Restricciones de\nhorario",
-        "Gestión de Pacientes",
-        "Reportes",
-      ];
-    }
+    List<String> baseMenuOptions = rolUsuario == 'Recepcionista'
+        ? ["Agenda", "Registrar Cita", "Gestión de Pacientes"]
+        : [
+            "Agenda",
+            "Registrar Cita",
+            "Usuarios",
+            "Configuración de\nhorario",
+            "Restricciones de\nhorario",
+            "Gestión de Pacientes",
+            "Reportes",
+          ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       child: ListenableBuilder(
         listenable: searchController,
         builder: (context, _) {
-          final String query = searchController.text.toLowerCase().trim();
+          final query = searchController.text.toLowerCase().trim();
+          final filtered = baseMenuOptions.where((o) => o.replaceAll("\n", " ").toLowerCase().contains(query)).toList();
 
-          final List<String> filteredOptions = baseMenuOptions.where((option) {
-            final normalizedOption = option.replaceAll("\n", " ").toLowerCase();
-            return normalizedOption.contains(query);
-          }).toList();
-
-          if (filteredOptions.isEmpty) {
-            return const Center(
-              child: Text(
-                "No se encontraron resultados",
-                style: TextStyle(
-                  fontFamily: 'Courier',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            );
+          if (filtered.isEmpty) {
+            return const Center(child: Text("No se encontraron resultados", style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold)));
           }
 
           return GridView.builder(
             padding: const EdgeInsets.only(top: 0, bottom: 20),
-            itemCount: filteredOptions.length,
+            itemCount: filtered.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 20,
@@ -582,22 +502,14 @@ class MenuGrid extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               return GestureDetector(
-                onTap: () => onOptionTap(filteredOptions[index]),
+                onTap: () => onOptionTap(filtered[index]),
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.homeCard,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                  decoration: BoxDecoration(color: AppColors.homeCard, borderRadius: BorderRadius.circular(15)),
                   alignment: Alignment.center,
                   child: Text(
-                    filteredOptions[index],
+                    filtered[index],
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Courier',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Colors.black87,
-                    ),
+                    style: const TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
                   ),
                 ),
               );

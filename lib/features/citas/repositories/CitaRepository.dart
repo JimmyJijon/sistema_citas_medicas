@@ -2,7 +2,7 @@ import '../../../core/database/database_helper.dart';
 import '../models/cita_model.dart';
 import '../models/historial_cita_model.dart';
 import '../../pacientes/models/paciente_model.dart';
-import 'package:sqflite/sqflite.dart';
+import '../../alertas/models/alerta_model.dart';
 
 class CitaRepository {
   final _dbHelper = DatabaseHelper.instance;
@@ -89,40 +89,21 @@ class CitaRepository {
   }
 
   // ─────────────────────────────────────────
-  // VERIFICAR SI EL PACIENTE TIENE CITA ACTIVA
+  // ALERTA — Insertar alerta asociada a una cita
   // ─────────────────────────────────────────
-  Future<bool> pacienteTieneCitaActiva(int idPaciente) async {
-    // Obtenemos la instancia de la base de datos
+
+  Future<void> insertarAlertaDeCita({
+    required int idCita,
+    required String tipoAlerta,
+    required String descripcion,
+  }) async {
     final db = await _dbHelper.database;
-
-    // Ejecutamos una consulta que cuenta cuántas citas existen
-    // para ese paciente con estado Ingresada o Reagendada
-    final result = await db.rawQuery('''
-      SELECT COUNT(*) as total
-      FROM cita
-      WHERE id_paciente = ?
-      AND estado IN ('Ingresada', 'Reagendada')
-    ''', [idPaciente]);
-
-    // Extraemos el valor numérico del COUNT(*)
-    // Si no hay resultados, devuelve 0
-    final total = Sqflite.firstIntValue(result) ?? 0;
-
-    // Retorna true si existe al menos una cita activa
-    return total > 0;
-  }
-
-    Future<void> actualizarEstadosAntiguos() async {
-    final db = await _dbHelper.database; // tu instancia de BD
-
-    // Cambia Pendiente → Ingresada
-    await db.rawUpdate(
-      "UPDATE cita SET estado = 'Ingresada' WHERE estado = 'Pendiente'"
-    );
-
-    // Cambia Confirmada → Ingresada (si existe)
-    await db.rawUpdate(
-      "UPDATE cita SET estado = 'Ingresada' WHERE estado = 'Confirmada'"
-    );
+    await db.insert('alerta', {
+      'id_cita': idCita,
+      'tipo_alerta': tipoAlerta,
+      'descripcion': descripcion,
+      'estado': 'Pendiente',
+      'fecha_generacion': DateTime.now().toIso8601String(),
+    });
   }
 }
