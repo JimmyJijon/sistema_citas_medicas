@@ -163,6 +163,13 @@ class CitaViewModel extends ChangeNotifier {
           idUsuario: idUsuarioActual,
         ));
 
+        // 3. Insertar alerta de cita creada
+        await _repository.insertarAlertaDeCita(
+          idCita: idCitaNueva,
+          tipoAlerta: 'Creada',
+          descripcion: 'Nueva cita registrada en estado: $_estadoCita.',
+        );
+
         _limpiarFormulario();
         _setLoading(false);
         return true;
@@ -300,6 +307,13 @@ class CitaViewModel extends ChangeNotifier {
         idUsuario: idUsuario,
       ));
 
+      // Alerta de reagendamiento
+      await _repository.insertarAlertaDeCita(
+        idCita: idCita,
+        tipoAlerta: 'Reagendada',
+        descripcion: motivo,
+      );
+
       // Refrescar estado local
       _citaSeleccionada = {
         ..._citaSeleccionada!,
@@ -334,6 +348,13 @@ class CitaViewModel extends ChangeNotifier {
         fechaEvento: DateTime.now(),
         idUsuario: idUsuario,
       ));
+
+      // Alerta de la acción
+      await _repository.insertarAlertaDeCita(
+        idCita: idCita,
+        tipoAlerta: nuevoEstado, // 'Cancelada' o 'Completada'
+        descripcion: descripcion,
+      );
       // Refrescar estado local sin ir de nuevo a BD
       _citaSeleccionada = {..._citaSeleccionada!, 'estado': nuevoEstado};
       await _cargarHistorial(idCita);
