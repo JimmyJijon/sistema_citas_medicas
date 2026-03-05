@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart'; // Importación del logo
 import '../models/restriccion_horario_model.dart';
 import '../viewmodels/restricciones_viewmodel.dart';
 import 'formulario_restriccion_screen.dart';
@@ -10,7 +11,6 @@ class RestriccionesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos watch para que la pantalla se redibuje cuando cambien los datos
     final vm = context.watch<RestriccionesViewModel>();
     final size = MediaQuery.of(context).size;
 
@@ -18,9 +18,10 @@ class RestriccionesScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF4F7F6),
       body: Column(
         children: [
+          // --- HEADER (FIJO) CON LOGO ---
           _buildHeader(size),
 
-          // Botón Volver
+          // --- BOTÓN VOLVER (FIJO) ---
           Padding(
             padding: const EdgeInsets.only(left: 20, top: 15, bottom: 10),
             child: Align(
@@ -35,12 +36,16 @@ class RestriccionesScreen extends StatelessWidget {
                 ),
                 child: const Text(
                   'Volver',
-                  style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14),
                 ),
               ),
             ),
           ),
 
+          // --- CONTENEDOR PRINCIPAL ---
           Expanded(
             child: Container(
               width: double.infinity,
@@ -52,59 +57,84 @@ class RestriccionesScreen extends StatelessWidget {
                   topRight: Radius.circular(30),
                 ),
               ),
-              child: vm.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(size.width > 600 ? 30 : 20),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Gestión de Restricciones',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 5),
-                          const Text(
-                            'Administra feriados, reuniones y ausencias',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 25),
-
-                          // Botón Nueva Restricción
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChangeNotifierProvider.value(
-                                      value: context.read<RestriccionesViewModel>(),
-                                      child: const FormularioRestriccionScreen(),
-                                    ),
+              child: Column(
+                children: [
+                  // --- SECCIÓN ESTÁTICA ---
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      size.width > 600 ? 30 : 20,
+                      size.width > 600 ? 30 : 20,
+                      size.width > 600 ? 30 : 20,
+                      0, // Quitamos el padding inferior aquí para controlarlo con SizedBox
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Gestión de Restricciones',
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          'Administra feriados, reuniones y ausencias',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 25),
+                        
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChangeNotifierProvider.value(
+                                    value: context.read<RestriccionesViewModel>(),
+                                    child: const FormularioRestriccionScreen(),
                                   ),
-                                );
-                              },
-                              icon: const Icon(Icons.add, color: Colors.white, size: 20),
-                              label: const Text(
-                                'Nueva restricción',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.btnGreen,
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                elevation: 0,
+                              );
+                            },
+                            icon: const Icon(Icons.add, color: Colors.white, size: 20),
+                            label: const Text(
+                              'Nueva restricción',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.btnGreen,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
+                              elevation: 0,
                             ),
                           ),
-                          const SizedBox(height: 20),
-
-                          _buildTablaRestricciones(context, vm, size),
-                        ],
-                      ),
+                        ),
+                        // --- MARGEN AGREGADO ENTRE BOTÓN Y LISTA ---
+                        const SizedBox(height: 25), 
+                      ],
                     ),
+                  ),
+
+                  // --- LISTADO / TABLA CON SCROLL INDEPENDIENTE ---
+                  Expanded(
+                    child: vm.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: _buildTablaRestricciones(context, vm, size),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -119,13 +149,24 @@ class RestriccionesScreen extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.only(top: size.width > 600 ? 20 : 15, bottom: 15, left: 15, right: 15),
+          padding: EdgeInsets.only(
+              top: size.width > 600 ? 20 : 15,
+              bottom: 15,
+              left: 15,
+              right: 15),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.white.withOpacity(0.5),
-                radius: 20,
-                child: const Text('logo', style: TextStyle(fontSize: 10, color: Colors.black)),
+              // Logo de la clínica agregado
+              ClinicLogo(size: 20, color: AppColors.accentColor),
+              const SizedBox(width: 8),
+              const Text(
+                "CLÍNICA",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.accentColor,
+                  letterSpacing: 1.2,
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -153,10 +194,12 @@ class RestriccionesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTablaRestricciones(BuildContext context, RestriccionesViewModel vm, Size size) {
+  Widget _buildTablaRestricciones(
+      BuildContext context, RestriccionesViewModel vm, Size size) {
     if (vm.restricciones.isEmpty) {
       return Container(
         width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         padding: const EdgeInsets.all(30),
         decoration: BoxDecoration(
             color: Colors.grey.shade50,
@@ -167,95 +210,93 @@ class RestriccionesScreen extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-          dataRowMaxHeight: 55,
-          columnSpacing: size.width > 600 ? 40 : 20,
-          columns: const [
-            DataColumn(label: Text('Tipo', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Fecha', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Desde', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Hasta', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Estado', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Acciones', style: TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: vm.restricciones.map((restriccion) {
-            final fechaStr = restriccion.fecha.toIso8601String().split('T')[0];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        headingRowColor: WidgetStateProperty.all(Colors.grey.shade100),
+        dataRowMaxHeight: 55,
+        columnSpacing: size.width > 600 ? 40 : 20,
+        columns: const [
+          DataColumn(label: Text('Tipo', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('Fecha', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('Desde', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('Hasta', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('Estado', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('Acciones', style: TextStyle(fontWeight: FontWeight.bold))),
+        ],
+        rows: vm.restricciones.map((restriccion) {
+          final fechaStr = restriccion.fecha.toIso8601String().split('T')[0];
 
-            return DataRow(cells: [
-              DataCell(Text(restriccion.tipo)),
-              DataCell(Text(fechaStr)),
-              DataCell(Text(restriccion.horaInicio)),
-              DataCell(Text(restriccion.horaFin)),
-              DataCell(
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: restriccion.estado.toLowerCase() == 'activa'
-                        ? Colors.green.shade50
-                        : Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    restriccion.estado,
-                    style: TextStyle(
-                        color: restriccion.estado.toLowerCase() == 'activa'
-                            ? Colors.green.shade700
-                            : Colors.red.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12),
-                  ),
+          return DataRow(cells: [
+            DataCell(Text(restriccion.tipo)),
+            DataCell(Text(fechaStr)),
+            DataCell(Text(restriccion.horaInicio)),
+            DataCell(Text(restriccion.horaFin)),
+            DataCell(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: restriccion.estado.toLowerCase() == 'activa'
+                      ? Colors.green.shade50
+                      : Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  restriccion.estado,
+                  style: TextStyle(
+                      color: restriccion.estado.toLowerCase() == 'activa'
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
                 ),
               ),
-              DataCell(Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey, size: 22),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChangeNotifierProvider.value(
-                            value: context.read<RestriccionesViewModel>(),
-                            child: FormularioRestriccionScreen(restriccion: restriccion),
-                          ),
+            ),
+            DataCell(Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined,
+                      color: Colors.blueGrey, size: 22),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChangeNotifierProvider.value(
+                          value: context.read<RestriccionesViewModel>(),
+                          child: FormularioRestriccionScreen(
+                              restriccion: restriccion),
                         ),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
-                    onPressed: () => _confirmarEliminacion(context, vm, restriccion),
-                  ),
-                ],
-              )),
-            ]);
-          }).toList(),
-        ),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.redAccent, size: 22),
+                  onPressed: () => _confirmarEliminacion(context, vm, restriccion),
+                ),
+              ],
+            )),
+          ]);
+        }).toList(),
       ),
     );
   }
 
-  // DIÁLOGO DE CONFIRMACIÓN
-  void _confirmarEliminacion(BuildContext context, RestriccionesViewModel vm, RestriccionHorario restriccion) {
+  void _confirmarEliminacion(BuildContext context, RestriccionesViewModel vm,
+      RestriccionHorario restriccion) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          // Bordes muy redondeados como en la imagen
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
           backgroundColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-          
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Título centrado y en negrita
               const Text(
                 'Eliminar Restricción',
                 style: TextStyle(
@@ -266,34 +307,27 @@ class RestriccionesScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              
-              // Texto descriptivo dinámico
               Text(
                 '¿Estás seguro de que deseas eliminar la restricción de tipo "${restriccion.tipo}"?',
                 style: const TextStyle(fontSize: 15, color: Colors.black87),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 15),
-              
-              // Texto de advertencia de borrado
               const Text(
                 'Esta acción borrará por completo esta restricción.',
                 style: TextStyle(fontSize: 14, color: Colors.black54),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              
-              // Fila de botones personalizados
               Row(
                 children: [
-                  // Botón Cancelar (Texto plano)
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(dialogContext),
                       child: const Text(
                         'Cancelar',
                         style: TextStyle(
-                          color: Color(0xFFE57373), // Rojo suave/rosado
+                          color: Color(0xFFE57373),
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
@@ -301,8 +335,6 @@ class RestriccionesScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  
-                  // Botón Eliminar (Fondo sólido rojo/coral)
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
@@ -318,7 +350,7 @@ class RestriccionesScreen extends StatelessWidget {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5252), // Rojo vibrante de la imagen
+                        backgroundColor: const Color(0xFFFF5252),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

@@ -4,7 +4,7 @@ import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
 import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/pacientes/models/paciente_model.dart';
-import 'package:sistema_citas_medicas/features/pacientes/widgets/campo_formulario_widget.dart';
+import 'package:sistema_citas_medicas/features/pacientes/screens/formulario_pacientes_screen.dart';
 
 class PacientesListScreen extends StatelessWidget {
   const PacientesListScreen({super.key});
@@ -17,64 +17,70 @@ class PacientesListScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // --- HEADER ---
+          // --- HEADER (FIJO) ---
           _buildHeader(),
 
-          // --- BOTÓN VOLVER ---
+          // --- BOTÓN VOLVER (FIJO) ---
           Padding(
-            padding: const EdgeInsets.only(left: 20, top: 10),
+            padding: const EdgeInsets.only(left: 20, top: 10, bottom: 5),
             child: Align(
               alignment: Alignment.centerLeft,
               child: _buildBotonVolver(context),
             ),
           ),
 
-          const SizedBox(height: 10),
-
-          // --- CONTENEDOR BLANCO REDONDEADO ---
+          // --- CONTENEDOR PRINCIPAL ---
           Expanded(
             child: Container(
               width: double.infinity,
               margin: const EdgeInsets.symmetric(horizontal: 15),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.cardBg,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
                 ),
               ),
-              child: vm.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          _buildSectionTitle('Gestión de Pacientes'),
-                          const SizedBox(height: 15),
-
-                          _buildBotonNuevo(context, vm),
-                          const SizedBox(height: 20),
-
-                          _buildSearchBar(vm),
-                          const SizedBox(height: 20),
-
-                          // --- LISTADO DE TARJETAS ---
-                          vm.pacientes.isEmpty
-                              ? const Center(
-                                  child: Text('No hay pacientes registrados'),
-                                )
-                              : Column(
-                                  children: vm.pacientes.map((paciente) {
-                                    return _buildPacienteCard(
-                                      context,
-                                      paciente,
-                                      vm,
-                                    );
-                                  }).toList(),
-                                ),
-                        ],
-                      ),
+              child: Column(
+                children: [
+                  // --- SECCIÓN ESTÁTICA (Título, Botón Nuevo y Buscador) ---
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                    child: Column(
+                      children: [
+                        _buildSectionTitle('Gestión de Pacientes'),
+                        const SizedBox(height: 15),
+                        _buildBotonNuevo(context),
+                        const SizedBox(height: 15),
+                        _buildSearchBar(vm),
+                      ],
                     ),
+                  ),
+
+                  // --- LISTADO (SCROLL INDEPENDIENTE) ---
+                  Expanded(
+                    child: vm.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(color: AppColors.btnGreen),
+                          )
+                        : vm.pacientes.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No hay pacientes registrados',
+                                  style: TextStyle(color: AppColors.textLight),
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                itemCount: vm.pacientes.length,
+                                itemBuilder: (context, index) {
+                                  final paciente = vm.pacientes[index];
+                                  return _buildPacienteCard(context, paciente, vm);
+                                },
+                              ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -87,30 +93,21 @@ class PacientesListScreen extends StatelessWidget {
   Widget _buildHeader() {
     return Container(
       color: AppColors.header,
-      padding: const EdgeInsets.only(top: 40, bottom: 15, left: 15, right: 15),
+      padding: const EdgeInsets.only(top: 45, bottom: 15, left: 15, right: 15),
       child: Row(
         children: [
-          SizedBox(
-            height: 44,
-            child: Row(
-              children: [
-                ClinicLogo(size: 22, color: AppColors.accentColor),
-                const SizedBox(width: 8),
-                const Text(
-                  "CLÍNICA",
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.accentColor,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
+          ClinicLogo(size: 22, color: AppColors.accentColor),
+          const SizedBox(width: 8),
+          const Text(
+            "CLÍNICA",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.accentColor,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(width: 10),
-
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -120,7 +117,12 @@ class PacientesListScreen extends StatelessWidget {
               ),
               child: const Text(
                 'Inicio / Gestión / Pacientes',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 13, 
+                  color: AppColors.textDark
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -139,7 +141,7 @@ class PacientesListScreen extends StatelessWidget {
       ),
       child: const Text(
         'Volver',
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        style: TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -149,33 +151,45 @@ class PacientesListScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
+        color: AppColors.altBackground,
         borderRadius: BorderRadius.circular(15),
       ),
       child: Text(
         title,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        style: const TextStyle(
+          fontWeight: FontWeight.bold, 
+          fontSize: 16, 
+          color: AppColors.textDark
+        ),
       ),
     );
   }
 
-  Widget _buildBotonNuevo(BuildContext context, PacientesViewModel vm) {
+  Widget _buildBotonNuevo(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () => _mostrarDialogoFormulario(context, vm),
-        icon: const Icon(Icons.add, color: Colors.black),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider.value(
+                value: context.read<PacientesViewModel>(),
+                child: const FormularioPacienteScreen(),
+              ),
+            ),
+          );
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'Nuevo Paciente',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.btnGreen,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
       ),
     );
@@ -186,9 +200,10 @@ class PacientesListScreen extends StatelessWidget {
       onChanged: (value) => vm.filtrarPacientes(value),
       decoration: InputDecoration(
         hintText: 'Buscar por nombre o cédula...',
-        prefixIcon: const Icon(Icons.search),
+        hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 14),
+        prefixIcon: const Icon(Icons.search, color: AppColors.accentColor),
         filled: true,
-        fillColor: Colors.grey[100],
+        fillColor: AppColors.inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
@@ -202,40 +217,40 @@ class PacientesListScreen extends StatelessWidget {
     PacienteModel paciente,
     PacientesViewModel vm,
   ) {
-    // Verificamos si el paciente está inactivo (Manejando mayúsculas/minúsculas por seguridad)
     final bool esInactivo = paciente.estado.toLowerCase() == 'inactivo';
 
     return Opacity(
-      opacity: esInactivo ? 0.6 : 1.0,
+      opacity: esInactivo ? 0.7 : 1.0,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: esInactivo ? Colors.grey.shade50 : Colors.white,
+          color: esInactivo ? Colors.grey.shade50 : AppColors.cardBg,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: esInactivo ? Colors.grey.shade300 : Colors.grey.shade200,
+            color: esInactivo ? Colors.grey.shade300 : AppColors.accentColor.withOpacity(0.3),
           ),
           boxShadow: [
             if (!esInactivo)
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(0.02),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
-              ),
+              )
           ],
         ),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: esInactivo
-                  ? Colors.grey.shade300
-                  : AppColors.fieldBlue.withOpacity(0.3),
+              backgroundColor: esInactivo 
+                  ? Colors.grey.shade200 
+                  : AppColors.accentColor.withOpacity(0.2),
               child: Text(
-                paciente.nombres.isNotEmpty
-                    ? paciente.nombres[0].toUpperCase()
-                    : '?',
-                style: const TextStyle(color: Colors.black),
+                paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
+                style: TextStyle(
+                  color: esInactivo ? Colors.grey : AppColors.textDark, 
+                  fontWeight: FontWeight.bold
+                ),
               ),
             ),
             const SizedBox(width: 15),
@@ -244,350 +259,153 @@ class PacientesListScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${paciente.nombres} ${paciente.apellidos}'.trim(),
+                    '${paciente.nombres} ${paciente.apellidos}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: esInactivo ? Colors.grey.shade600 : Colors.black,
-                      decoration: esInactivo
-                          ? TextDecoration.lineThrough
-                          : null,
+                      color: esInactivo ? Colors.grey : AppColors.textDark,
+                      decoration: esInactivo ? TextDecoration.lineThrough : null,
                     ),
                   ),
-                  const SizedBox(height: 2),
                   Text(
                     'C.I: ${paciente.cedula} • ${paciente.estado.toUpperCase()}',
                     style: TextStyle(
-                      color: esInactivo
-                          ? Colors.red.shade300
-                          : Colors.grey[600],
-                      fontSize: 12,
+                      color: esInactivo ? Colors.grey : AppColors.textLight, 
+                      fontSize: 12
                     ),
                   ),
                 ],
               ),
             ),
-
-            // --- BOTÓN EDITAR (Siempre visible) ---
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 20),
-              onPressed: () =>
-                  _mostrarDialogoFormulario(context, vm, paciente: paciente),
-            ),
-
-            // --- BOTÓN CONDICIONAL: ELIMINAR O REACTIVAR ---
-            esInactivo
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.settings_backup_restore,
-                      color: Colors.green,
+              icon: Icon(
+                Icons.edit_outlined, 
+                color: esInactivo ? Colors.grey : AppColors.buttonPrimary, 
+                size: 22
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider.value(
+                      value: context.read<PacientesViewModel>(),
+                      child: FormularioPacienteScreen(paciente: paciente),
                     ),
-                    tooltip: 'Reactivar Paciente',
-                    onPressed: () {
-                      _mostrarDialogoReactivacion(context, paciente, vm);
-                      ScaffoldMessenger.of(context);
-                    },
-                  )
-                : IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
-                    ),
-                    onPressed: () =>
-                        _mostrarDialogoConfirmacion(context, paciente, vm),
                   ),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                esInactivo ? Icons.settings_backup_restore : Icons.delete_outline,
+                color: esInactivo ? AppColors.btnGreen : AppColors.btnRed,
+                size: 22,
+              ),
+              onPressed: () {
+                if (esInactivo) {
+                  _mostrarDialogoReactivacion(context, paciente, vm);
+                } else {
+                  _mostrarDialogoConfirmacion(context, paciente, vm);
+                }
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  // --- LÓGICA DE FORMULARIO Y VALIDACIONES ---
+  // --- DIÁLOGOS ---
 
-  void _mostrarDialogoFormulario(
-    BuildContext context,
-    PacientesViewModel vm, {
-    PacienteModel? paciente,
-  }) {
-    final bool esEdicion = paciente != null;
-
-    final nombreCtrl = TextEditingController(text: paciente?.nombres);
-    final apellidosCtrl = TextEditingController(text: paciente?.apellidos);
-    final cedulaCtrl = TextEditingController(text: paciente?.cedula);
-    final telefonoCtrl = TextEditingController(text: paciente?.telefono);
-    final correoCtrl = TextEditingController(text: paciente?.correo);
-
-    // Guardamos el estado actual si es edición, o asignamos 'Activo' por defecto si es nuevo
-    final String estadoSeleccionado = paciente?.estado ?? 'Activo';
-
+  void _mostrarDialogoConfirmacion(BuildContext context, PacienteModel paciente, PacientesViewModel vm) {
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          ),
-          title: Text(
-            esEdicion ? 'Editar Paciente' : 'Nuevo Paciente',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CampoFormulario(
-                  label: 'Nombres',
-                  hint: 'Ej: Juan Pablo',
-                  controller: nombreCtrl,
-                  soloLetras: true,
-                ),
-                const SizedBox(height: 10),
-                CampoFormulario(
-                  label: 'Apellidos',
-                  hint: 'Ej: Pérez Gómez',
-                  controller: apellidosCtrl,
-                  soloLetras: true,
-                ),
-                const SizedBox(height: 10),
-                CampoFormulario(
-                  label: 'Cédula',
-                  hint: 'Ej: 0102030405',
-                  controller: cedulaCtrl,
-                  soloNumeros: true,
-                ),
-                const SizedBox(height: 10),
-                CampoFormulario(
-                  label: 'Teléfono',
-                  hint: 'Ej: 0991234567',
-                  controller: telefonoCtrl,
-                  soloNumeros: true,
-                ),
-                const SizedBox(height: 10),
-                CampoFormulario(
-                  label: 'Correo',
-                  hint: 'Ej: juan@email.com',
-                  controller: correoCtrl,
-                ),
-                // Eliminamos la fila del DropdownButton de Estado. El usuario ya no lo ve.
-              ],
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        backgroundColor: AppColors.cardBg,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Eliminar Paciente', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textDark)),
+            const SizedBox(height: 15),
+            Text(
+              '¿Estás seguro de que deseas eliminar a ${paciente.nombres}?\n\nSolo se marcará como inactivo.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textLight),
             ),
-          ),
-          actionsPadding: const EdgeInsets.only(
-            bottom: 20,
-            left: 20,
-            right: 20,
-          ),
-          actions: [
+            const SizedBox(height: 25),
             Row(
               children: [
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancelar',
-                      style: TextStyle(
-                        color: AppColors.btnRed,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: const Text('Cancelar', style: TextStyle(color: AppColors.btnRed)),
                   ),
                 ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.btnGreen,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      backgroundColor: AppColors.btnRed,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
                     ),
                     onPressed: () {
-                      if (nombreCtrl.text.trim().isEmpty ||
-                          apellidosCtrl.text.trim().isEmpty ||
-                          cedulaCtrl.text.trim().isEmpty ||
-                          telefonoCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Por favor, llene todos los campos obligatorios.',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-
-                      final p = PacienteModel(
-                        idPaciente: paciente?.idPaciente,
-                        cedula: cedulaCtrl.text,
-                        nombres: nombreCtrl.text,
-                        apellidos: apellidosCtrl.text,
-                        telefono: telefonoCtrl.text,
-                        correo: correoCtrl.text,
-                        estado:
-                            estadoSeleccionado, // Se asigna el estado silenciosamente
-                      );
-
-                      if (esEdicion) {
-                        vm.editarPaciente(p);
-                      } else {
-                        vm.agregarPaciente(p);
-                      }
-
+                      vm.eliminarPaciente(paciente);
                       Navigator.pop(context);
                     },
-                    child: Text(
-                      esEdicion ? 'Actualizar' : 'Guardar',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: const Text('Eliminar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
-            ),
+            )
           ],
         ),
       ),
     );
   }
 
-  // --- AVISO DE CONFIRMACIÓN PARA ELIMINAR ---
-  void _mostrarDialogoConfirmacion(
-    BuildContext context,
-    PacienteModel paciente,
-    PacientesViewModel vm,
-  ) {
+  void _mostrarDialogoReactivacion(BuildContext context, PacienteModel paciente, PacientesViewModel vm) {
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Text(
-          'Eliminar Paciente',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          '¿Estás seguro de que deseas eliminar a ${paciente.nombres} ${paciente.apellidos}?\n\nEsta acción no lo borrará por completo, solo lo marcará como inactivo.',
-          textAlign: TextAlign.center,
-        ),
-        actionsPadding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(
-                      color: AppColors.btnRed,
-                      fontWeight: FontWeight.bold,
+        backgroundColor: AppColors.cardBg,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.settings_backup_restore, color: AppColors.btnGreen, size: 40),
+            const SizedBox(height: 15),
+            const Text('Reactivar Paciente', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textDark)),
+            const SizedBox(height: 10),
+            Text('¿Deseas activar nuevamente a ${paciente.nombres}?', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textLight)),
+            const SizedBox(height: 25),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('No, cancelar', style: TextStyle(color: AppColors.textLight)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.btnGreen,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
                     ),
+                    onPressed: () {
+                      vm.activarPaciente(paciente);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Activar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  onPressed: () {
-                    vm.eliminarPaciente(paciente);
-                    Navigator.pop(context);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Paciente eliminado correctamente'),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Eliminar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- AVISO DE CONFIRMACIÓN PARA REACTIVAR ---
-  void _mostrarDialogoReactivacion(
-    BuildContext context,
-    PacienteModel paciente,
-    PacientesViewModel vm,
-  ) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Icon(
-          Icons.settings_backup_restore,
-          color: Colors.green,
-          size: 40,
+              ],
+            )
+          ],
         ),
-        content: Text(
-          '¿Deseas activar nuevamente a este paciente?',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancelar',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
-                  onPressed: () {
-                    vm.activarPaciente(
-                      paciente,
-                    ); // Aquí se conecta con tu ViewModel
-                    Navigator.pop(context);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Paciente reactivado correctamente'),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Activar',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
