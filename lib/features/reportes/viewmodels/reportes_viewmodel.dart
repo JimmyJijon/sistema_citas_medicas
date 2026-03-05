@@ -61,11 +61,12 @@ class ReportesViewModel extends ChangeNotifier {
       String fechaDesdeStr = _formatForDB(_desdeDateTime);
       String fechaHastaStr = _formatForDB(_hastaDateTime);
 
+      // CAMBIO CLAVE: Traemos todas las citas individuales, no el COUNT agrupado
+      // porque necesitamos evaluar la hora_fin de cada una.
       final List<Map<String, dynamic>> resultados = await db.rawQuery('''
-        SELECT estado, COUNT(*) as cantidad
+        SELECT estado, fecha, hora_fin
         FROM cita
         WHERE fecha >= ? AND fecha <= ?
-        GROUP BY estado
       ''', [fechaDesdeStr, fechaHastaStr]);
       
       // =========================================================
@@ -89,30 +90,41 @@ class ReportesViewModel extends ChangeNotifier {
       enEspera = 0;
       noAtendidas = 0;
 
-      // Procesamos los resultados de la BD 
+      final ahora = DateTime.now();
+
+      // Procesamos los resultados fila por fila de la BD con logica temporal 
       for (var fila in resultados) {
         String estado = fila['estado'].toString().toLowerCase();
-        int cantidad = fila['cantidad'] as int;
+        String fechaCitaStr = fila['fecha']; // YYYY-MM-DD
+        String horaFinStr = fila['hora_fin']; // HH:mm
+        
+        totalCitas++;
 
-        totalCitas += cantidad;
+        // Creamos un objeto DateTime con el momento exacto en que terminó la cita
+        DateTime momentoFinCita = DateTime.parse("$fechaCitaStr $horaFinStr");
 
         switch (estado) {
           case 'completada':
-            completadas = cantidad;
+            completadas++;
             break;
           case 'cancelada':
-            canceladas = cantidad;
+            canceladas++;
             break;
           case 'reagendada':
-            reagendadas = cantidad;
+            reagendadas++;
             break;
-          case 'ingresada': // <--- AGREGAR ESTO
+          case 'ingresada':
           case 'en espera':
           case 'pendiente':
-            enEspera += cantidad;
+            // SI YA PASÓ LA HORA DE FIN, ES "NO ATENDIDA"
+            if (ahora.isAfter(momentoFinCita)) {
+              noAtendidas++;
+            } else {
+              enEspera++;
+            }
             break;
           default:
-            noAtendidas += cantidad;
+            noAtendidas++;
             break;
         }
       }
