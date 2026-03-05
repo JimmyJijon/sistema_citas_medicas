@@ -137,7 +137,7 @@ class _FormularioRestriccionScreenState extends State<FormularioRestriccionScree
                 ),
                 child: const Text(
                   'Volver',
-                  style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(color: Color.fromARGB(221, 255, 255, 255), fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
             ),
