@@ -23,32 +23,42 @@ class PacientesViewModel extends ChangeNotifier {
   Future<void> cargarPacientes() async {
     _isLoading = true;
     notifyListeners();
-
-    // Traemos absolutamente todos los pacientes (activos e inactivos)
+    // Traemos la lista actualizada de la BD
     _pacientes = await _repository.getPacientes();
-
     _isLoading = false;
     notifyListeners();
   }
 
-  // --- LÓGICA DE BÚSQUEDA (La tuya estaba perfecta, la mantenemos) ---
+  // --- LÓGICA DE BÚSQUEDA Mejorada ---
   List<PacienteModel> get pacientes {
-    if (_filtroBusqueda.isEmpty) {
+    // 1. Limpiamos la búsqueda del usuario: quitamos espacios extras
+    // Ejemplo: "  Juan    Perez  " -> "juan perez"
+    final query = _filtroBusqueda.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+    if (query.isEmpty) {
       return _pacientes;
     }
 
     return _pacientes.where((paciente) {
-      final nombre = paciente.nombres.toLowerCase();
+      // 2. Creamos un String con el nombre completo para comparar
+      final nombreCompleto = "${paciente.nombres} ${paciente.apellidos}".toLowerCase();
       final cedula = paciente.cedula.toLowerCase();
-      final query = _filtroBusqueda.toLowerCase();
 
-      return nombre.contains(query) || cedula.contains(query);
+      // 3. Verificamos si el query está en el nombre completo o en la cédula
+      return nombreCompleto.contains(query) || cedula.contains(query);
     }).toList();
   }
 
   void filtrarPacientes(String query) {
     _filtroBusqueda = query;
     notifyListeners(); 
+  }
+
+  // --- Activar Paciente ---
+  Future<void> activarPaciente(PacienteModel paciente) async {
+    paciente.estado = 'Activo'; // O 'activo' según lo manejes en tu BD
+    await _repository.updatePaciente(paciente);
+    await cargarPacientes();
   }
 
   // --- CREATE (Guardar en Base de Datos) ---

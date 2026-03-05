@@ -189,24 +189,35 @@ class PacientesListScreen extends StatelessWidget {
     PacienteModel paciente,
     PacientesViewModel vm,
   ) {
-    // Verificamos si el paciente está inactivo
-    final bool esInactivo = paciente.estado == 'Inactivo';
+    // Verificamos si el paciente está inactivo (Manejando mayúsculas/minúsculas por seguridad)
+    final bool esInactivo = paciente.estado.toLowerCase() == 'inactivo';
 
-    // Usamos Opacity para dar el efecto de desvanecido
     return Opacity(
-      opacity: esInactivo ? 0.5 : 1.0, // 50% de opacidad si es inactivo
+      opacity: esInactivo ? 0.6 : 1.0, 
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: esInactivo ? Colors.grey.shade100 : Colors.white, // Fondo un poco más gris si es inactivo
+          color: esInactivo ? Colors.grey.shade50 : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: esInactivo ? Colors.grey.shade300 : Colors.grey.shade200,
+          ),
+          boxShadow: [
+            if (!esInactivo)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+          ],
         ),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppColors.fieldBlue.withOpacity(0.3),
+              backgroundColor: esInactivo 
+                  ? Colors.grey.shade300 
+                  : AppColors.fieldBlue.withOpacity(0.3),
               child: Text(
                 paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
                 style: const TextStyle(color: Colors.black),
@@ -221,36 +232,47 @@ class PacientesListScreen extends StatelessWidget {
                     '${paciente.nombres} ${paciente.apellidos}'.trim(),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      decoration: esInactivo ? TextDecoration.lineThrough : null, // Opcional: tachar el nombre
+                      fontSize: 15,
+                      color: esInactivo ? Colors.grey.shade600 : Colors.black,
+                      decoration: esInactivo ? TextDecoration.lineThrough : null,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    '${paciente.cedula} • ${paciente.estado}',
+                    'C.I: ${paciente.cedula} • ${paciente.estado.toUpperCase()}',
                     style: TextStyle(
-                      color: esInactivo ? Colors.redAccent : Colors.grey[600], 
+                      color: esInactivo ? Colors.red.shade300 : Colors.grey[600],
                       fontSize: 12,
-                      fontWeight: esInactivo ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
               ),
             ),
+            
+            // --- BOTÓN EDITAR (Siempre visible) ---
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blueGrey),
+              icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 20),
               onPressed: () => _mostrarDialogoFormulario(
                 context,
                 vm,
                 paciente: paciente,
               ),
             ),
-            // Solo mostramos el botón de eliminar si el paciente ESTÁ ACTIVO
-            if (!esInactivo)
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                onPressed: () {
-                  _mostrarDialogoConfirmacion(context, paciente, vm);
-                },
-              ),
+
+            // --- BOTÓN CONDICIONAL: ELIMINAR O REACTIVAR ---
+            esInactivo
+                ? IconButton(
+                    icon: const Icon(Icons.settings_backup_restore, color: Colors.green),
+                    tooltip: 'Reactivar Paciente',
+                    onPressed: () {
+                      _mostrarDialogoReactivacion(context, paciente, vm);
+                      ScaffoldMessenger.of(context);
+                    },
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    onPressed: () => _mostrarDialogoConfirmacion(context, paciente, vm),
+                  ),
           ],
         ),
       ),
@@ -474,6 +496,56 @@ class PacientesListScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  // --- AVISO DE CONFIRMACIÓN PARA REACTIVAR ---
+  void _mostrarDialogoReactivacion(
+    BuildContext context,
+    PacienteModel paciente,
+    PacientesViewModel vm,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        title: const Icon(Icons.settings_backup_restore, color: Colors.green, size: 40),
+        content: Text(
+          '¿Deseas activar nuevamente a este paciente?',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                ),
+              ),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed: () {
+                    vm.activarPaciente(paciente); // Aquí se conecta con tu ViewModel
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Paciente reactivado correctamente'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Text('Activar', style: TextStyle(color: Colors.white)),
                 ),
               ),
             ],
