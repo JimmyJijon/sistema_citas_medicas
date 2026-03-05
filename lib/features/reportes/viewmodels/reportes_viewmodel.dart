@@ -1,198 +1,181 @@
 import 'package:flutter/material.dart';
 import 'package:sistema_citas_medicas/core/database/database_helper.dart';
-// import 'package:sistema_citas_medicas/core/database/database_helper.dart'; // Comentado temporalmente si te da error de que no existe aún
 
 class ReportesViewModel extends ChangeNotifier {
-  DateTime _desdeDateTime = DateTime.now();
-  DateTime _hastaDateTime = DateTime.now();
+  DateTime _desdeDateTime = DateTime.now().copyWith(hour: 0, minute: 0, second: 0);
+  DateTime _hastaDateTime = DateTime.now().copyWith(hour: 23, minute: 59, second: 59);
 
-  // Estadísticas del reporte
-  int totalCitas = 0;
-  int completadas = 0;
-  int canceladas = 0;
-  int reagendadas = 0;
-  int enEspera = 0;
-  int noAtendidas = 0;
+  // ─────────────────────────────────────────
+  // ESTADÍSTICAS
+  // ─────────────────────────────────────────
+  int totalCitas   = 0;
+  int completadas  = 0;
+  int canceladas   = 0;
+  int reagendadas  = 0;
+  int enEspera     = 0;
+  int noAtendidas  = 0;
 
-  bool isLoading = false; // Para mostrar un indicador de carga si es necesario
+  bool isLoading = false;
 
+  // ─────────────────────────────────────────
+  // LISTADO DETALLE
+  // ─────────────────────────────────────────
+  List<Map<String, dynamic>> _listadoCitasDetalle = [];
+  List<Map<String, dynamic>> get listadoCitasDetalle => _listadoCitasDetalle;
+
+  // ─────────────────────────────────────────
+  // GETTERS
+  // ─────────────────────────────────────────
   DateTime get desdeDateTime => _desdeDateTime;
   DateTime get hastaDateTime => _hastaDateTime;
 
-  // --- FORMATEO VISUAL (Para los botones) ---
+  // ─────────────────────────────────────────
+  // FORMATEO VISUAL
+  // ─────────────────────────────────────────
   String formatDateTime(DateTime dt) {
-    final day = dt.day.toString().padLeft(2, '0');
-    final month = dt.month.toString().padLeft(2, '0');
-    final year = dt.year;
-    final hour = dt.hour.toString().padLeft(2, '0');
+    final day    = dt.day.toString().padLeft(2, '0');
+    final month  = dt.month.toString().padLeft(2, '0');
+    final year   = dt.year;
+    final hour   = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
     return "$day/$month/$year $hour:$minute";
   }
 
-  // --- FORMATEO PARA BASE DE DATOS (YYYY-MM-DD) ---
-  String _formatForDB(DateTime dt) {
-    final day = dt.day.toString().padLeft(2, '0');
-    final month = dt.month.toString().padLeft(2, '0');
-    final year = dt.year;
-    return "$year-$month-$day";
+  // ─────────────────────────────────────────
+  // FORMATEO PARA BD  yyyy-MM-dd HH:mm
+  // ─────────────────────────────────────────
+  String _formatFecha(DateTime dt) {
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    return "${dt.year}-$m-$d";
   }
 
-  void setDesdeDateTime(DateTime newDate) {
-    _desdeDateTime = newDate;
-    notifyListeners();
+  String _formatHora(DateTime dt) {
+    final h  = dt.hour.toString().padLeft(2, '0');
+    final mi = dt.minute.toString().padLeft(2, '0');
+    return "$h:$mi";
   }
 
-  void setHastaDateTime(DateTime newDate) {
-    _hastaDateTime = newDate;
-    notifyListeners();
+  void setDesdeDateTime(DateTime v) { _desdeDateTime = v; notifyListeners(); }
+  void setHastaDateTime(DateTime v) { _hastaDateTime = v; notifyListeners(); }
+
+  // ─────────────────────────────────────────
+  // DETERMINAR ESTADO VISUAL de una fila
+  // Considera estados guardados en BD + lógica temporal
+  // ─────────────────────────────────────────
+  String _estadoVisual(Map<String, dynamic> fila) {
+    final estado     = (fila['estado'] ?? '').toString();
+    final fechaStr   = fila['fecha']    as String;
+    final horaFinStr = fila['hora_fin'] as String;
+
+    // Solo Ingresada tiene lógica temporal — el resto se muestra tal cual
+    if (estado != 'Ingresada') return estado;
+
+    final momentoFin = DateTime.tryParse('${fechaStr}T$horaFinStr:00');
+    final ahora = DateTime.now();
+
+    if (momentoFin != null && ahora.isAfter(momentoFin)) {
+      return 'No atendida'; // Solo visual — no cambia la BD
+    }
+    return 'En espera';
   }
 
-  // --- LÓGICA DE BASE DE DATOS ---
+  // ─────────────────────────────────────────
+  // VERIFICAR si la cita está dentro del rango fecha+hora
+  // ─────────────────────────────────────────
+  bool _dentroDeRango(Map<String, dynamic> fila) {
+    final fechaStr      = fila['fecha']      as String; // yyyy-MM-dd
+    final horaInicioStr = fila['hora_inicio'] as String; // HH:mm
+
+    final momentoInicio = DateTime.tryParse('${fechaStr}T$horaInicioStr:00');
+    if (momentoInicio == null) return false;
+
+    return !momentoInicio.isBefore(_desdeDateTime) &&
+           !momentoInicio.isAfter(_hastaDateTime);
+  }
+
+  // ─────────────────────────────────────────
+  // GENERAR REPORTE
+  // ─────────────────────────────────────────
   Future<void> generarReporte() async {
     isLoading = true;
     notifyListeners();
 
-    // Simulamos un pequeño retraso para que veas el indicador de carga (opcional)
-    await Future.delayed(const Duration(seconds: 1));
-
     try {
       final db = await DatabaseHelper.instance.database;
-      
-      String fechaDesdeStr = _formatForDB(_desdeDateTime);
-      String fechaHastaStr = _formatForDB(_hastaDateTime);
 
-      // CAMBIO CLAVE: Traemos todas las citas individuales, no el COUNT agrupado
-      // porque necesitamos evaluar la hora_fin de cada una.
-      final List<Map<String, dynamic>> resultados = await db.rawQuery('''
-        SELECT estado, fecha, hora_fin
+      // Traemos todas las citas en el rango de FECHAS (sin filtrar hora aún)
+      final resultados = await db.rawQuery('''
+        SELECT estado, fecha, hora_inicio, hora_fin
         FROM cita
         WHERE fecha >= ? AND fecha <= ?
-      ''', [fechaDesdeStr, fechaHastaStr]);
-      
-      // =========================================================
+      ''', [_formatFecha(_desdeDateTime), _formatFecha(_hastaDateTime)]);
 
-      // =========================================================
-      // DATOS MOCK: Simulamos lo que respondería SQLite
-      // =========================================================
-      // final List<Map<String, dynamic>> resultados = [
-      //   {'estado': 'completada', 'cantidad': 15},
-      //   {'estado': 'cancelada', 'cantidad': 3},
-      //   {'estado': 'reagendada', 'cantidad': 2},
-      //   {'estado': 'en espera', 'cantidad': 8},
-      //   {'estado': 'no atendida', 'cantidad': 1},
-      // ];
+      // Reiniciar contadores
+      totalCitas = completadas = canceladas = reagendadas = enEspera = noAtendidas = 0;
 
-      // Reiniciamos contadores
-      totalCitas = 0;
-      completadas = 0;
-      canceladas = 0;
-      reagendadas = 0;
-      enEspera = 0;
-      noAtendidas = 0;
+      for (final fila in resultados) {
+        // Filtrar por hora exacta
+        if (!_dentroDeRango(fila)) continue;
 
-      final ahora = DateTime.now();
-
-      // Procesamos los resultados fila por fila de la BD con logica temporal 
-      for (var fila in resultados) {
-        String estado = fila['estado'].toString().toLowerCase();
-        String fechaCitaStr = fila['fecha']; // YYYY-MM-DD
-        String horaFinStr = fila['hora_fin']; // HH:mm
-        
         totalCitas++;
-
-        // Creamos un objeto DateTime con el momento exacto en que terminó la cita
-        DateTime momentoFinCita = DateTime.parse("$fechaCitaStr $horaFinStr");
-
-        switch (estado) {
-          case 'completada':
-            completadas++;
-            break;
-          case 'cancelada':
-            canceladas++;
-            break;
-          case 'reagendada':
-            reagendadas++;
-            break;
-          case 'ingresada':
-          case 'en espera':
-          case 'pendiente':
-            // SI YA PASÓ LA HORA DE FIN, ES "NO ATENDIDA"
-            if (ahora.isAfter(momentoFinCita)) {
-              noAtendidas++;
-            } else {
-              enEspera++;
-            }
-            break;
-          default:
-            noAtendidas++;
-            break;
+        switch (_estadoVisual(fila)) {
+          case 'Completada':  completadas++;  break;
+          case 'Cancelada':   canceladas++;   break;
+          case 'Reagendada':  reagendadas++;  break;
+          case 'En espera':   enEspera++;     break;
+          case 'No atendida': noAtendidas++;  break;
         }
       }
     } catch (e) {
-      debugPrint("Error al generar reporte: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners(); // Avisamos a la pantalla que ya tenemos los datos
-    }
-  }
-
-  // --- NUEVAS VARIABLES PARA EL LISTADO ---
-  List<Map<String, dynamic>> _listadoCitasDetalle = [];
-  List<Map<String, dynamic>> get listadoCitasDetalle => _listadoCitasDetalle;
-
-  
-
-  // --- NUEVA FUNCIÓN PARA EL BOTÓN "VER LISTADO" ---
-  Future<void> cargarListadoDetalle() async {
-    isLoading = true;
-    notifyListeners();
-
-    // Simulamos que la base de datos está buscando
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    try {
-        final db = await DatabaseHelper.instance.database;
-        String fechaDesdeStr = _formatForDB(_desdeDateTime);
-        String fechaHastaStr = _formatForDB(_hastaDateTime);
-
-    // USAMOS LEFT JOIN y los nombres de tu tabla (id_paciente)
-      final List<Map<String, dynamic>> resultados = await db.rawQuery('''
-        SELECT 
-          c.*, 
-          (p.nombres || ' ' || p.apellidos) as nombre_paciente,
-          u.nombre as nombre_doctor
-        FROM cita c
-        LEFT JOIN paciente p ON c.id_paciente = p.id_paciente
-        LEFT JOIN usuario u ON c.creada_por = u.id_usuario
-        WHERE c.fecha BETWEEN ? AND ?
-        ORDER BY c.fecha ASC, c.hora_inicio ASC
-      ''', [fechaDesdeStr, fechaHastaStr]);
-      _listadoCitasDetalle = resultados;
-      
-      // DEBUG: Mira esto en tu consola para ver qué está llegando
-      print("Citas en lista: ${_listadoCitasDetalle.length}");
-      if (_listadoCitasDetalle.isNotEmpty) {
-        print("Primer estado: ${_listadoCitasDetalle[0]['estado']}");
-      }
-      
-      // =========================================================
-
-      // =========================================================
-      // DATOS MOCK: Simulamos el detalle de las citas
-      // =========================================================
-      // _listadoCitasDetalle = [
-      //   {'id': 101, 'paciente': 'Juan Pérez', 'fecha': '2026-03-02', 'hora': '09:00', 'estado': 'Completada', 'doctor': 'Dra. García'},
-      //   {'id': 102, 'paciente': 'María López', 'fecha': '2026-03-02', 'hora': '10:30', 'estado': 'Cancelada', 'doctor': 'Dr. Rodríguez'},
-      //   {'id': 103, 'paciente': 'Carlos Ruiz', 'fecha': '2026-03-03', 'hora': '14:00', 'estado': 'En espera', 'doctor': 'Dra. García'},
-      //   {'id': 104, 'paciente': 'Ana Martínez', 'fecha': '2026-03-03', 'hora': '16:15', 'estado': 'Completada', 'doctor': 'Dra. Gómez'},
-      // ];
-
-    } catch (e) {
-      debugPrint("Error al cargar listado: $e");
+      debugPrint('Error al generar reporte: $e');
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
+  // ─────────────────────────────────────────
+  // LISTADO DETALLADO
+  // ─────────────────────────────────────────
+  Future<void> cargarListadoDetalle() async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final db = await DatabaseHelper.instance.database;
+
+      final resultados = await db.rawQuery('''
+        SELECT
+          c.id_cita,
+          c.estado,
+          c.fecha,
+          c.hora_inicio,
+          c.hora_fin,
+          (p.nombres || ' ' || p.apellidos) AS nombre_paciente,
+          p.cedula,
+          u.nombre AS nombre_doctor
+        FROM cita c
+        LEFT JOIN paciente p ON c.id_paciente = p.id_paciente
+        LEFT JOIN usuario u ON c.creada_por = u.id_usuario
+        WHERE c.fecha BETWEEN ? AND ?
+        ORDER BY c.fecha ASC, c.hora_inicio ASC
+      ''', [_formatFecha(_desdeDateTime), _formatFecha(_hastaDateTime)]);
+
+      // Filtrar por hora y enriquecer con estado visual
+      _listadoCitasDetalle = resultados
+          .where(_dentroDeRango)
+          .map((fila) => {
+                ...fila,
+                'estado_visual': _estadoVisual(fila),
+              })
+          .toList();
+
+    } catch (e) {
+      debugPrint('Error al cargar listado: $e');
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }
