@@ -1,5 +1,5 @@
 class RestriccionHorario {
-  final int idRestriccion;
+  final int? idRestriccion;
   final String tipo; // feriado, reunion, otro
   final DateTime fecha;
   final String horaInicio;
@@ -7,7 +7,7 @@ class RestriccionHorario {
   final String estado;
 
   RestriccionHorario({
-    required this.idRestriccion,
+    this.idRestriccion,
     required this.tipo,
     required this.fecha,
     required this.horaInicio,
@@ -25,12 +25,18 @@ class RestriccionHorario {
         estado: json['estado'],
       );
 
-  Map<String, dynamic> toJson() => {
-    'id_restriccion': idRestriccion,
-    'tipo': tipo,
-    'fecha': fecha.toIso8601String().split('T')[0],
-    'hora_inicio': horaInicio,
-    'hora_fin': horaFin,
-    'estado': estado,
-  };
+    Map<String, dynamic> toJson() {
+    final Map<String, dynamic> map = {
+      'tipo': tipo,
+      'fecha': fecha.toIso8601String().split('T')[0],
+      'hora_inicio': horaInicio,
+      'hora_fin': horaFin,
+      'estado': estado,
+    };
+    // Solo enviamos el ID a la BD si ya existe
+    if (idRestriccion != null) {
+      map['id_restriccion'] = idRestriccion; // o int, según manejes tu BD
+    }
+    return map;
+  }
 }

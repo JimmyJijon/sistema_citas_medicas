@@ -14,6 +14,8 @@ import 'package:sistema_citas_medicas/features/reportes/screens/reportes_screen.
 import 'package:sistema_citas_medicas/features/home/viewmodels/home_viewmodel.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
+import 'package:sistema_citas_medicas/features/horarios/screens/restricciones_screen.dart'; // Verifica la ruta exacta
+import 'package:sistema_citas_medicas/features/horarios/viewmodels/restricciones_viewmodel.dart'; // Verifica la ruta exacta
 
 // ==========================================
 // 1. PANTALLA PRINCIPAL
@@ -73,6 +75,17 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const HorarioScreen()),
+        );
+        break;
+      case "Restricciones de horario":
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChangeNotifierProvider(
+              create: (_) => RestriccionesViewModel(), // Inyectamos el ViewModel
+              child: const RestriccionesScreen(),       // Cargamos la pantalla
+            ),
+          ),
         );
         break;
       case "Gestión de Pacientes":
