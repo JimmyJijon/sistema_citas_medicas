@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
 import 'package:sistema_citas_medicas/features/reportes/viewmodels/reportes_viewmodel.dart';
 
 class ReportesScreen extends StatelessWidget {
@@ -19,8 +20,14 @@ class _ReportesView extends StatelessWidget {
   const _ReportesView();
 
   // --- LÓGICA DE SELECCIÓN DE FECHA ---
-  Future<void> _pickDateTime(BuildContext context, bool isDesde, ReportesViewModel viewModel) async {
-    final DateTime initialDate = isDesde ? viewModel.desdeDateTime : viewModel.hastaDateTime;
+  Future<void> _pickDateTime(
+    BuildContext context,
+    bool isDesde,
+    ReportesViewModel viewModel,
+  ) async {
+    final DateTime initialDate = isDesde
+        ? viewModel.desdeDateTime
+        : viewModel.hastaDateTime;
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -38,8 +45,11 @@ class _ReportesView extends StatelessWidget {
     if (pickedTime == null) return;
 
     final newDateTime = DateTime(
-      pickedDate.year, pickedDate.month, pickedDate.day,
-      pickedTime.hour, pickedTime.minute,
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
     );
 
     if (isDesde) {
@@ -66,12 +76,14 @@ class _ReportesView extends StatelessWidget {
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: IntrinsicHeight(
                       child: Container(
                         margin: EdgeInsets.symmetric(
-                          horizontal: size.width * 0.05, 
-                          vertical: 15
+                          horizontal: size.width * 0.05,
+                          vertical: 15,
                         ),
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -86,11 +98,16 @@ class _ReportesView extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.btnGreen,
                                 foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                               onPressed: () => Navigator.pop(context),
                               icon: const Icon(Icons.arrow_back, size: 18),
-                              label: const Text("Volver", style: TextStyle(fontWeight: FontWeight.bold)),
+                              label: const Text(
+                                "Volver",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
                             const SizedBox(height: 20),
 
@@ -105,7 +122,10 @@ class _ReportesView extends StatelessWidget {
                               child: const Text(
                                 "REPORTES ESTADÍSTICOS",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontFamily: 'Courier',
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 25),
@@ -113,14 +133,20 @@ class _ReportesView extends StatelessWidget {
                             // Selectores de Fecha
                             DateSelectorWidget(
                               label: "Desde:",
-                              dateValue: viewModel.formatDateTime(viewModel.desdeDateTime),
-                              onTap: () => _pickDateTime(context, true, viewModel),
+                              dateValue: viewModel.formatDateTime(
+                                viewModel.desdeDateTime,
+                              ),
+                              onTap: () =>
+                                  _pickDateTime(context, true, viewModel),
                             ),
                             const SizedBox(height: 12),
                             DateSelectorWidget(
                               label: "Hasta:",
-                              dateValue: viewModel.formatDateTime(viewModel.hastaDateTime),
-                              onTap: () => _pickDateTime(context, false, viewModel),
+                              dateValue: viewModel.formatDateTime(
+                                viewModel.hastaDateTime,
+                              ),
+                              onTap: () =>
+                                  _pickDateTime(context, false, viewModel),
                             ),
                             const SizedBox(height: 25),
 
@@ -131,13 +157,29 @@ class _ReportesView extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.btnGreen,
                                   foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 15,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
                                 ),
                                 onPressed: () => viewModel.generarReporte(),
-                                child: viewModel.isLoading 
-                                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                                    : const Text("GENERAR REPORTE", style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: viewModel.isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.black,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "GENERAR REPORTE",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 25),
@@ -152,17 +194,48 @@ class _ReportesView extends StatelessWidget {
                               ),
                               child: Column(
                                 children: [
-                                  StatRowWidget(label: "Total de Citas:", value: viewModel.totalCitas.toString().padLeft(2, '0'), isTotal: true),
+                                  StatRowWidget(
+                                    label: "Total de Citas:",
+                                    value: viewModel.totalCitas
+                                        .toString()
+                                        .padLeft(2, '0'),
+                                    isTotal: true,
+                                  ),
                                   const Divider(),
-                                  StatRowWidget(label: "Completadas:", value: viewModel.completadas.toString().padLeft(2, '0')),
-                                  StatRowWidget(label: "Canceladas:", value: viewModel.canceladas.toString().padLeft(2, '0')),
-                                  StatRowWidget(label: "Reagendadas:", value: viewModel.reagendadas.toString().padLeft(2, '0')),
-                                  StatRowWidget(label: "En espera:", value: viewModel.enEspera.toString().padLeft(2, '0')),
-                                  StatRowWidget(label: "No atendidas:", value: viewModel.noAtendidas.toString().padLeft(2, '0')),
+                                  StatRowWidget(
+                                    label: "Completadas:",
+                                    value: viewModel.completadas
+                                        .toString()
+                                        .padLeft(2, '0'),
+                                  ),
+                                  StatRowWidget(
+                                    label: "Canceladas:",
+                                    value: viewModel.canceladas
+                                        .toString()
+                                        .padLeft(2, '0'),
+                                  ),
+                                  StatRowWidget(
+                                    label: "Reagendadas:",
+                                    value: viewModel.reagendadas
+                                        .toString()
+                                        .padLeft(2, '0'),
+                                  ),
+                                  StatRowWidget(
+                                    label: "En espera:",
+                                    value: viewModel.enEspera
+                                        .toString()
+                                        .padLeft(2, '0'),
+                                  ),
+                                  StatRowWidget(
+                                    label: "No atendidas:",
+                                    value: viewModel.noAtendidas
+                                        .toString()
+                                        .padLeft(2, '0'),
+                                  ),
                                 ],
                               ),
                             ),
-                            
+
                             // Espacio flexible que empuja el último botón al fondo si hay espacio
                             const Spacer(),
                             const SizedBox(height: 20),
@@ -174,16 +247,26 @@ class _ReportesView extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF19C5D0),
                                   foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 15,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
                                 ),
                                 onPressed: () async {
                                   await viewModel.cargarListadoDetalle();
                                   if (context.mounted) {
-                                    _mostrarModalListado(context, viewModel.listadoCitasDetalle);
+                                    _mostrarModalListado(
+                                      context,
+                                      viewModel.listadoCitasDetalle,
+                                    );
                                   }
                                 },
-                                child: const Text("VER LISTADO DETALLADO", style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  "VER LISTADO DETALLADO",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                               ),
                             ),
                           ],
@@ -211,22 +294,33 @@ class _ReportesView extends StatelessWidget {
           padding: const EdgeInsets.all(15),
           child: Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Colors.grey,
-                radius: 20,
-                child: Text("logo", style: TextStyle(fontSize: 10, color: Colors.black)),
+              ClinicLogo(size: 22, color: AppColors.accentColor),
+              const SizedBox(width: 8),
+              const Text(
+                "CLÍNICA",
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.accentColor,
+                  letterSpacing: 1.2,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
+
               Expanded(
                 child: Container(
                   height: 35,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   decoration: BoxDecoration(
                     color: AppColors.fieldBlue,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.centerLeft,
-                  child: const Text("Inicio / Reporte", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "Inicio / Reporte",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -237,7 +331,10 @@ class _ReportesView extends StatelessWidget {
   }
 
   // --- MODAL DETALLE (CORREGIDO) ---
-  void _mostrarModalListado(BuildContext context, List<Map<String, dynamic>> citas) {
+  void _mostrarModalListado(
+    BuildContext context,
+    List<Map<String, dynamic>> citas,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -251,10 +348,20 @@ class _ReportesView extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             const Padding(
               padding: EdgeInsets.all(20),
-              child: Text("Detalle de Citas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Detalle de Citas",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             const Divider(height: 1),
             Expanded(
@@ -265,15 +372,19 @@ class _ReportesView extends StatelessWidget {
                       padding: const EdgeInsets.all(15),
                       itemBuilder: (context, index) {
                         final cita = citas[index];
-                        
+
                         // 1. OBTENEMOS DATOS DE LA CITA
-                        final String estadoBD = (cita['estado'] ?? '').toString().toLowerCase();
+                        final String estadoBD = (cita['estado'] ?? '')
+                            .toString()
+                            .toLowerCase();
                         final String fechaStr = cita['fecha']; // YYYY-MM-DD
                         final String horaFinStr = cita['hora_fin']; // HH:mm
-                        
+
                         // 2. LÓGICA TEMPORAL (Igual a la del ViewModel)
                         final ahora = DateTime.now();
-                        final momentoFinCita = DateTime.parse("$fechaStr $horaFinStr");
+                        final momentoFinCita = DateTime.parse(
+                          "$fechaStr $horaFinStr",
+                        );
 
                         // 3. DEFINIMOS COLOR Y TEXTO VISUAL
                         Color colorE = Colors.grey;
@@ -288,13 +399,16 @@ class _ReportesView extends StatelessWidget {
                         } else if (estadoBD == 'reagendada') {
                           colorE = Colors.orange;
                           labelE = "REAGENDADA";
-                        } else if (estadoBD == 'ingresada' || estadoBD == 'en espera') {
+                        } else if (estadoBD == 'ingresada' ||
+                            estadoBD == 'en espera') {
                           // Si el estado es ingresada, verificamos si ya expiró
                           if (ahora.isAfter(momentoFinCita)) {
-                            colorE = Colors.grey; // Color para las que se pasaron de hora
+                            colorE = Colors
+                                .grey; // Color para las que se pasaron de hora
                             labelE = "NO ATENDIDA";
                           } else {
-                            colorE = Colors.orange; // Color para las que aún están a tiempo
+                            colorE = Colors
+                                .orange; // Color para las que aún están a tiempo
                             labelE = "EN ESPERA";
                           }
                         }
@@ -302,26 +416,35 @@ class _ReportesView extends StatelessWidget {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 10),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12), 
-                            side: BorderSide(color: Colors.grey.shade100)
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.shade100),
                           ),
                           child: ListTile(
                             title: Text(
-                              cita['nombre_paciente'] ?? 'Sin Nombre', 
-                              style: const TextStyle(fontWeight: FontWeight.bold)
+                              cita['nombre_paciente'] ?? 'Sin Nombre',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text(
-                              "Dr: ${cita['nombre_doctor']}\n${cita['fecha']} | ${cita['hora_inicio']} - ${cita['hora_fin']}"
+                              "Dr: ${cita['nombre_doctor']}\n${cita['fecha']} | ${cita['hora_inicio']} - ${cita['hora_fin']}",
                             ),
                             trailing: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: colorE,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 labelE,
-                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -342,23 +465,46 @@ class DateSelectorWidget extends StatelessWidget {
   final String label;
   final String dateValue;
   final VoidCallback onTap;
-  const DateSelectorWidget({super.key, required this.label, required this.dateValue, required this.onTap});
+  const DateSelectorWidget({
+    super.key,
+    required this.label,
+    required this.dateValue,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SizedBox(width: 65, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+        SizedBox(
+          width: 65,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+        ),
         Expanded(
           child: InkWell(
             onTap: onTap,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: AppColors.fieldBlue, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: AppColors.fieldBlue,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Flexible(child: Text("[$dateValue]", style: const TextStyle(fontFamily: 'Courier', fontSize: 12), overflow: TextOverflow.ellipsis)),
+                  Flexible(
+                    child: Text(
+                      "[$dateValue]",
+                      style: const TextStyle(
+                        fontFamily: 'Courier',
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const Icon(Icons.calendar_today, size: 16),
                 ],
               ),
@@ -374,7 +520,12 @@ class StatRowWidget extends StatelessWidget {
   final String label;
   final String value;
   final bool isTotal;
-  const StatRowWidget({super.key, required this.label, required this.value, this.isTotal = false});
+  const StatRowWidget({
+    super.key,
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -383,8 +534,21 @@ class StatRowWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
-          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isTotal ? Colors.blue : Colors.black)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isTotal ? Colors.blue : Colors.black,
+            ),
+          ),
         ],
       ),
     );

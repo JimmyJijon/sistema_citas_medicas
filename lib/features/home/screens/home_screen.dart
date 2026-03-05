@@ -66,7 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case "Usuarios":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const GestionUsuariosScreen()),
+          MaterialPageRoute(
+            builder: (context) => const GestionUsuariosScreen(),
+          ),
         );
         break;
       case "Configuración de horario":
@@ -117,12 +119,15 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_viewModel.usuario == null) {
           return Scaffold(
             appBar: AppBar(title: const Text("Error")),
-            body: const Center(child: Text("Error al cargar los datos del usuario")),
+            body: const Center(
+              child: Text("Error al cargar los datos del usuario"),
+            ),
           );
         }
 
         final userData = {
-          "nombre": "${_viewModel.usuario!.nombre} ${_viewModel.usuario!.apellido}",
+          "nombre":
+              "${_viewModel.usuario!.nombre} ${_viewModel.usuario!.apellido}",
           "correo": _viewModel.usuario!.correo,
           "rol": _viewModel.usuario!.rol,
           "codigo": _viewModel.usuario!.idUsuario.toString().padLeft(3, '0'),
@@ -203,10 +208,13 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
       duration: const Duration(seconds: 10),
     )..repeat();
 
-    _textAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: const Offset(-1.0, 0.0),
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.linear));
+    _textAnimation =
+        Tween<Offset>(
+          begin: const Offset(1.0, 0.0),
+          end: const Offset(-1.0, 0.0),
+        ).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.linear),
+        );
   }
 
   @override
@@ -258,7 +266,7 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                   padding: const EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
                     color: AppColors.accentColor,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.hardEdge,
                   alignment: Alignment.center,
@@ -272,7 +280,7 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                           style: TextStyle(
                             fontFamily: 'Courier',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 14,
                             color: Colors.white,
                           ),
                           maxLines: 1,
@@ -298,7 +306,11 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const Icon(Icons.notifications, color: Colors.yellow, size: 30),
+                    const Icon(
+                      Icons.notifications,
+                      color: Colors.yellow,
+                      size: 30,
+                    ),
                     if (totalPendientes > 0)
                       Positioned(
                         right: -4,
@@ -342,7 +354,11 @@ class _HomeHeaderWidgetState extends State<HomeHeaderWidget>
                 child: const CircleAvatar(
                   radius: 18,
                   backgroundColor: Color(0xFF81C784),
-                  child: Icon(Icons.power_settings_new, size: 20, color: Colors.white),
+                  child: Icon(
+                    Icons.power_settings_new,
+                    size: 20,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -371,13 +387,45 @@ class ClinicLogoCrossHeartPainter extends CustomPainter {
     const double crossSize = 6.0;
     final Path heartPath = Path()
       ..moveTo(mid, size.height * 0.25)
-      ..cubicTo(size.width * 0.9, -size.height * 0.1, size.width * 1.3, size.height * 0.6, mid, size.height)
-      ..cubicTo(-size.width * 0.3, size.height * 0.6, size.width * 0.1, -size.height * 0.1, mid, size.height * 0.25)
+      ..cubicTo(
+        size.width * 0.9,
+        -size.height * 0.1,
+        size.width * 1.3,
+        size.height * 0.6,
+        mid,
+        size.height,
+      )
+      ..cubicTo(
+        -size.width * 0.3,
+        size.height * 0.6,
+        size.width * 0.1,
+        -size.height * 0.1,
+        mid,
+        size.height * 0.25,
+      )
       ..close();
     canvas.drawPath(heartPath, paint);
-    final Paint crossPaint = Paint()..color = color..style = PaintingStyle.fill;
-    canvas.drawRect(Rect.fromLTWH(mid - (crossSize * 0.8), size.height * 0.45, crossSize * 1.6, crossSize * 0.3), crossPaint);
-    canvas.drawRect(Rect.fromLTWH(mid - (crossSize * 0.15), size.height * 0.35, crossSize * 0.3, crossSize), crossPaint);
+    final Paint crossPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(
+      Rect.fromLTWH(
+        mid - (crossSize * 0.8),
+        size.height * 0.45,
+        crossSize * 1.6,
+        crossSize * 0.3,
+      ),
+      crossPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(
+        mid - (crossSize * 0.15),
+        size.height * 0.35,
+        crossSize * 0.3,
+        crossSize,
+      ),
+      crossPaint,
+    );
   }
 
   @override
@@ -402,12 +450,31 @@ class UserCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Datos del usuario:", style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Courier', fontSize: 16)),
+            const Text(
+              "Datos del usuario:",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Courier',
+                fontSize: 16,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text("Usuario: ${userData['nombre']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
-            Text("Correo: ${userData['correo']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
-            Text("Rol: ${userData['rol']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
-            Text("cod: ${userData['codigo']}", style: const TextStyle(fontFamily: 'Courier', fontSize: 14)),
+            Text(
+              "Usuario: ${userData['nombre']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
+            Text(
+              "Correo: ${userData['correo']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
+            Text(
+              "Rol: ${userData['rol']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
+            Text(
+              "cod: ${userData['codigo']}",
+              style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+            ),
           ],
         ),
       ),
@@ -424,7 +491,10 @@ class CustomSearchBar extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(25)),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(25),
+      ),
       child: Row(
         children: [
           Icon(Icons.search, color: Colors.cyan[600], size: 30),
@@ -432,13 +502,19 @@ class CustomSearchBar extends StatelessWidget {
           Expanded(
             child: Container(
               height: 35,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
               child: TextField(
                 controller: controller,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 9,
+                  ),
                   hintText: "Buscar...",
                   hintStyle: TextStyle(fontSize: 13, fontFamily: 'Courier'),
                   isDense: true,
@@ -485,10 +561,22 @@ class MenuGrid extends StatelessWidget {
         listenable: searchController,
         builder: (context, _) {
           final query = searchController.text.toLowerCase().trim();
-          final filtered = baseMenuOptions.where((o) => o.replaceAll("\n", " ").toLowerCase().contains(query)).toList();
+          final filtered = baseMenuOptions
+              .where(
+                (o) => o.replaceAll("\n", " ").toLowerCase().contains(query),
+              )
+              .toList();
 
           if (filtered.isEmpty) {
-            return const Center(child: Text("No se encontraron resultados", style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold)));
+            return const Center(
+              child: Text(
+                "No se encontraron resultados",
+                style: TextStyle(
+                  fontFamily: 'Courier',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
           }
 
           return GridView.builder(
@@ -504,12 +592,20 @@ class MenuGrid extends StatelessWidget {
               return GestureDetector(
                 onTap: () => onOptionTap(filtered[index]),
                 child: Container(
-                  decoration: BoxDecoration(color: AppColors.homeCard, borderRadius: BorderRadius.circular(15)),
+                  decoration: BoxDecoration(
+                    color: AppColors.homeCard,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                   alignment: Alignment.center,
                   child: Text(
                     filtered[index],
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                    style: const TextStyle(
+                      fontFamily: 'Courier',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
               );
