@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/core/models/usuario_model.dart';
 import 'package:sistema_citas_medicas/features/usuarios/viewmodels/usuario_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/citas/widgets/app_header.dart';
 import 'usuario_form_screen.dart';
 
@@ -46,9 +47,9 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<UsuarioViewModel>();
+    final idActual = context.read<AuthViewModel>().usuarioActual?.idUsuario;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const AppHeader(title: "Inicio / Configuración / Usuarios"),
@@ -183,11 +184,14 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                                 itemBuilder: (context, index) {
                                   final u = vm.usuariosFiltrados[index];
-                                  final activo = u.estado == 'A';
+                                  final esSesionActual = u.idUsuario == idActual;
                                   return _UsuarioCard(
                                     usuario: u,
+                                    esSesionActual: esSesionActual,
                                     onEditar: () => _irAFormulario(usuario: u),
-                                    onToggleEstado: () => vm.cambiarEstado(u.idUsuario, u.estado),
+                                    onToggleEstado: esSesionActual
+                                        ? null
+                                        : () => vm.cambiarEstado(u.idUsuario, u.estado),
                                   );
                                 },
                               ),
@@ -208,11 +212,13 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
 
 class _UsuarioCard extends StatelessWidget {
   final Usuario usuario;
+  final bool esSesionActual;
   final VoidCallback onEditar;
-  final VoidCallback onToggleEstado;
+  final VoidCallback? onToggleEstado;
 
   const _UsuarioCard({
     required this.usuario,
+    required this.esSesionActual,
     required this.onEditar,
     required this.onToggleEstado,
   });
@@ -351,28 +357,40 @@ class _UsuarioCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Activar / Inactivar
-                Tooltip(
-                  message: activo ? "Inactivar" : "Activar",
-                  child: InkWell(
-                    onTap: onToggleEstado,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: activo
-                            ? Colors.red.withOpacity(0.1)
-                            : Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
+                // Activar / Inactivar — bloqueado si es la sesión actual
+                esSesionActual
+                    ? Tooltip(
+                        message: "No puedes inactivar tu propia cuenta",
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(Icons.lock_outline, size: 18, color: Colors.grey),
+                        ),
+                      )
+                    : Tooltip(
+                        message: activo ? "Inactivar" : "Activar",
+                        child: InkWell(
+                          onTap: onToggleEstado,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: activo
+                                  ? Colors.red.withOpacity(0.1)
+                                  : Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Icon(
+                              activo ? Icons.person_off_outlined : Icons.person_outlined,
+                              size: 18,
+                              color: activo ? Colors.red : Colors.green,
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Icon(
-                        activo ? Icons.person_off_outlined : Icons.person_outlined,
-                        size: 18,
-                        color: activo ? Colors.red : Colors.green,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ],

@@ -50,7 +50,7 @@ class _CancelarCitaViewState extends State<CancelarCitaView> {
     if (motivo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('⚠️ Ingresa el motivo de la cancelación'),
+          content: Text('Ingresa el motivo de la cancelación'),
           backgroundColor: Colors.orange,
         ),
       );

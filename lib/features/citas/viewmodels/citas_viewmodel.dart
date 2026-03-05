@@ -300,6 +300,61 @@ class CitaViewModel extends ChangeNotifier {
     final idCita = _citaSeleccionada!['id_cita'] as int;
 
     try {
+      // ── Validar día laborable ──
+      if (_horarioActivo != null) {
+        final diasMap = {'1': 'L', '2': 'M', '3': 'X', '4': 'J', '5': 'V', '6': 'S', '7': 'D'};
+        final diaSemana = diasMap[nuevaFecha.weekday.toString()]!;
+        final diasLaborables = _horarioActivo!.diasAtencion.split(',');
+
+        if (!diasLaborables.contains(diaSemana)) {
+          _errorMessage = 'El día seleccionado no es laborable según la configuración de horario.';
+          notifyListeners();
+          return false;
+        }
+
+        // ── Validar que la hora esté dentro de la jornada ──
+        final horaMin   = _horaAMinutos(nuevaHoraInicio);
+        final inicioMin = _horaAMinutos(_horarioActivo!.horaInicio);
+        final finMin    = _horaAMinutos(_horarioActivo!.horaFin);
+
+        if (horaMin < inicioMin || horaMin + 20 > finMin) {
+          _errorMessage = 'La franja seleccionada está fuera del horario laboral.';
+          notifyListeners();
+          return false;
+        }
+
+        // ── Validar pausa ──
+        final pausaI = _horarioActivo!.pausaInicio != null && _horarioActivo!.pausaInicio!.isNotEmpty
+            ? _horaAMinutos(_horarioActivo!.pausaInicio!)
+            : null;
+        final pausaF = _horarioActivo!.pausaFin != null && _horarioActivo!.pausaFin!.isNotEmpty
+            ? _horaAMinutos(_horarioActivo!.pausaFin!)
+            : null;
+
+        if (pausaI != null && pausaF != null) {
+          if (horaMin >= pausaI && horaMin < pausaF) {
+            _errorMessage = 'La franja seleccionada cae dentro del horario de pausa.';
+            notifyListeners();
+            return false;
+          }
+        }
+
+        // ── Validar restricciones del día ──
+        final fechaStr = '${nuevaFecha.year}-'
+            '${nuevaFecha.month.toString().padLeft(2, '0')}-'
+            '${nuevaFecha.day.toString().padLeft(2, '0')}';
+        final restricciones = await _restriccionesRepository.obtenerPorFecha(fechaStr);
+
+        for (final r in restricciones) {
+          final rI = _horaAMinutos(r.horaInicio);
+          final rF = _horaAMinutos(r.horaFin);
+          if (horaMin < rF && horaMin + 20 > rI) {
+            _errorMessage = 'La franja seleccionada está bloqueada por una restriccion: ${r.tipo}.';
+            notifyListeners();
+            return false;
+          }
+        }
+      }
       // Calcular nueva hora fin
       final horaFin = _calcularHoraFin(nuevaHoraInicio);
 

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
 import 'package:sistema_citas_medicas/core/models/usuario_model.dart';
 import 'package:sistema_citas_medicas/features/usuarios/viewmodels/usuario_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/citas/widgets/app_header.dart';
 
 class UsuarioFormScreen extends StatefulWidget {
@@ -233,14 +234,40 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
                     if (_esEdicion) ...[
                       const SizedBox(height: 4),
                       _buildLabel("Estado"),
-                      _buildDropdown(
-                        valor: _estado,
-                        items: const ['A', 'I'],
-                        itemLabels: const ['Activo', 'Inactivo'],
-                        icono: Icons.toggle_on_outlined,
-                        hint: "Seleccionar estado",
-                        onChanged: (v) => setState(() => _estado = v!),
-                      ),
+                      Builder(builder: (ctx) {
+                        final idActual = ctx.read<AuthViewModel>().usuarioActual?.idUsuario;
+                        final esSesionActual = widget.usuarioParaEditar?.idUsuario == idActual;
+                        if (esSesionActual) {
+                          // Mostrar campo bloqueado — no puede inactivarse a sí mismo
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: AppColors.fieldBlue,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.lock_outline, size: 18, color: Colors.black38),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Text(
+                                    "No puedes cambiar el estado de tu propia cuenta",
+                                    style: TextStyle(fontSize: 12, color: Colors.black45),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return _buildDropdown(
+                          valor: _estado,
+                          items: const ['A', 'I'],
+                          itemLabels: const ['Activo', 'Inactivo'],
+                          icono: Icons.toggle_on_outlined,
+                          hint: "Seleccionar estado",
+                          onChanged: (v) => setState(() => _estado = v!),
+                        );
+                      }),
                     ],
 
                     const SizedBox(height: 4),
