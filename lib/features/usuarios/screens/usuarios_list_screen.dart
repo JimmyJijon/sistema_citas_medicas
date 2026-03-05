@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // Asumiendo que tienes estos archivos según los pasos anteriores.
 // Si no, puedes copiar las clases AppHeader y AppColors al final de este archivo.
-import 'package:sistema_citas_medicas/core/theme/app_colors.dart'; 
-import 'package:sistema_citas_medicas/features/citas/widgets/app_header.dart'; 
+import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/features/citas/widgets/app_header.dart';
 
 // ==========================================
 // 1. MODELO DE DATOS
@@ -37,17 +37,19 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   // Lista simulada
   List<Usuario> usuarios = [
     Usuario(
-        nombre: "Jenny Montalvo",
-        usuario: "jenny.m",
-        rol: "Recepcionista",
-        estado: "Activo",
-        password: "123456"),
+      nombre: "Jenny Montalvo",
+      usuario: "jenny.m",
+      rol: "Recepcionista",
+      estado: "Activo",
+      password: "123456",
+    ),
     Usuario(
-        nombre: "Ana Perez",
-        usuario: "ana.p",
-        rol: "Recepcionista",
-        estado: "Activo",
-        password: "123456"),
+      nombre: "Ana Perez",
+      usuario: "ana.p",
+      rol: "Recepcionista",
+      estado: "Activo",
+      password: "123456",
+    ),
   ];
 
   @override
@@ -77,7 +79,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
-                      )
+                      ),
                     ],
                   ),
                   alignment: Alignment.center,
@@ -99,11 +101,11 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
                 boxShadow: [
-                   BoxShadow(
+                  BoxShadow(
                     color: Colors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: Column(
@@ -122,7 +124,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87
+                          color: Colors.black87,
                         ),
                       ),
                     ),
@@ -137,7 +139,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.btnGreen,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)
+                          borderRadius: BorderRadius.circular(15),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -145,7 +147,8 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         final nuevoUsuario = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const FormularioUsuarioScreen(), // Modo crear
+                            builder: (_) =>
+                                const FormularioUsuarioScreen(), // Modo crear
                           ),
                         );
 
@@ -158,7 +161,10 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       icon: const Icon(Icons.add, color: Colors.black),
                       label: const Text(
                         "Nuevo Usuario",
-                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -183,25 +189,35 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                               backgroundColor: Colors.blueGrey[100],
                               child: Text(
                                 user.nombre.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             title: Text(
                               user.nombre,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text("${user.rol} • ${user.estado}"),
                             trailing: IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                              icon: const Icon(
+                                Icons.edit,
+                                color: Colors.blueGrey,
+                              ),
                               onPressed: () async {
                                 final actualizado = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => FormularioUsuarioScreen(usuarioParaEditar: user),
+                                    builder: (_) => FormularioUsuarioScreen(
+                                      usuarioParaEditar: user,
+                                    ),
                                   ),
                                 );
 
-                                if (actualizado != null && actualizado is Usuario) {
+                                if (actualizado != null &&
+                                    actualizado is Usuario) {
                                   setState(() {
                                     usuarios[index] = actualizado;
                                   });
@@ -232,7 +248,8 @@ class FormularioUsuarioScreen extends StatefulWidget {
   const FormularioUsuarioScreen({super.key, this.usuarioParaEditar});
 
   @override
-  State<FormularioUsuarioScreen> createState() => _FormularioUsuarioScreenState();
+  State<FormularioUsuarioScreen> createState() =>
+      _FormularioUsuarioScreenState();
 }
 
 class _FormularioUsuarioScreenState extends State<FormularioUsuarioScreen> {
@@ -269,100 +286,143 @@ class _FormularioUsuarioScreenState extends State<FormularioUsuarioScreen> {
           // Header
           const AppHeader(title: "Inicio / Usuarios / Registro"),
 
-           // CONTENIDO CENTRADO Y ESTILIZADO
-           Expanded(
-             child: Center(
-               child: SingleChildScrollView(
-                 padding: const EdgeInsets.all(20),
-                 child: Container(
-                   padding: const EdgeInsets.all(25),
-                   decoration: BoxDecoration(
-                     color: Colors.white,
-                     borderRadius: BorderRadius.circular(25),
-                     boxShadow: [
-                       BoxShadow(
-                         color: Colors.black.withOpacity(0.05),
-                         blurRadius: 10,
-                         offset: const Offset(0, 4),
-                       )
-                     ],
-                   ),
-                   child: Column(
-                     children: [
-                       Text(
-                         esEdicion ? "Editar Usuario" : "Registrar Usuario",
-                         style: const TextStyle(
-                           fontSize: 20, 
-                           fontWeight: FontWeight.bold
-                         ),
-                       ),
-                       const SizedBox(height: 20),
-                 
-                       _campo("Nombre Completo", nombreController, Icons.person),
-                       _campo("Usuario", usuarioController, Icons.account_circle),
-                       
-                       _dropdown("Rol", ["Recepcionista", "Administrador", "Doctor"], (val) => rol = val),
-                       _dropdown("Estado", ["Activo", "Inactivo"], (val) => estado = val),
-                       
-                       _campo("Contraseña", passwordController, Icons.lock, obscure: true),
-                       _campo("Confirmar Contraseña", confirmController, Icons.lock_outline, obscure: true),
-                 
-                       const SizedBox(height: 25),
-                 
-                       Row(
-                         children: [
-                           Expanded(
-                             child: ElevatedButton(
-                               style: ElevatedButton.styleFrom(
-                                 backgroundColor: Colors.red[400],
-                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-                               ),
-                               onPressed: () => Navigator.pop(context),
-                               child: const Text("Cancelar", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                             ),
-                           ),
-                           const SizedBox(width: 15),
-                           Expanded(
-                             child: ElevatedButton(
-                               style: ElevatedButton.styleFrom(
-                                 backgroundColor: AppColors.btnGreen,
-                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-                               ),
-                               onPressed: () {
-                                 // Retornamos el objeto Usuario modificado o creado
-                                 Navigator.pop(
-                                   context,
-                                   Usuario(
-                                     nombre: nombreController.text,
-                                     usuario: usuarioController.text,
-                                     rol: rol,
-                                     estado: estado,
-                                     password: passwordController.text,
-                                   ),
-                                 );
-                               },
-                               child: Text(
-                                 esEdicion ? "Actualizar" : "Guardar", 
-                                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
-                               ),
-                             ),
-                           ),
-                         ],
-                       )
-                     ],
-                   ),
-                 ),
-               ),
-             ),
-           ),
+          // CONTENIDO CENTRADO Y ESTILIZADO
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        esEdicion ? "Editar Usuario" : "Registrar Usuario",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      _campo("Nombre Completo", nombreController, Icons.person),
+                      _campo(
+                        "Usuario",
+                        usuarioController,
+                        Icons.account_circle,
+                      ),
+
+                      _dropdown("Rol", [
+                        "Recepcionista",
+                        "Administrador",
+                        "Doctor",
+                      ], (val) => rol = val),
+                      _dropdown("Estado", [
+                        "Activo",
+                        "Inactivo",
+                      ], (val) => estado = val),
+
+                      _campo(
+                        "Contraseña",
+                        passwordController,
+                        Icons.lock,
+                        obscure: true,
+                      ),
+                      _campo(
+                        "Confirmar Contraseña",
+                        confirmController,
+                        Icons.lock_outline,
+                        obscure: true,
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red[400],
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text(
+                                "Cancelar",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.btnGreen,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: () {
+                                // Retornamos el objeto Usuario modificado o creado
+                                Navigator.pop(
+                                  context,
+                                  Usuario(
+                                    nombre: nombreController.text,
+                                    usuario: usuarioController.text,
+                                    rol: rol,
+                                    estado: estado,
+                                    password: passwordController.text,
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                esEdicion ? "Actualizar" : "Guardar",
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _campo(String label, TextEditingController controller, IconData icon, {bool obscure = false}) {
+  Widget _campo(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    bool obscure = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextField(
@@ -386,23 +446,37 @@ class _FormularioUsuarioScreenState extends State<FormularioUsuarioScreen> {
     );
   }
 
-  Widget _dropdown(String label, List<String> items, Function(String) onChanged) {
+  Widget _dropdown(
+    String label,
+    List<String> items,
+    Function(String) onChanged,
+  ) {
     // Aseguramos que el valor actual esté en la lista, si no, tomamos el primero
-    String initialValue = items.contains(esEdicion && label == "Rol" ? rol : (esEdicion && label == "Estado" ? estado : items.first)) 
-        ? (label == "Rol" ? rol : estado) 
+    String initialValue =
+        items.contains(
+          esEdicion && label == "Rol"
+              ? rol
+              : (esEdicion && label == "Estado" ? estado : items.first),
+        )
+        ? (label == "Rol" ? rol : estado)
         : items.first;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: DropdownButtonFormField<String>(
         value: initialValue,
-        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        items: items
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
         onChanged: (val) {
           if (val != null) onChanged(val);
         },
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Colors.grey),
+          prefixIcon: const Icon(
+            Icons.arrow_drop_down_circle_outlined,
+            color: Colors.grey,
+          ),
           filled: true,
           fillColor: Colors.grey[50],
           enabledBorder: OutlineInputBorder(

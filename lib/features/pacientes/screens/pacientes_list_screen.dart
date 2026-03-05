@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
 import 'package:sistema_citas_medicas/features/pacientes/viewmodels/pacientes_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/pacientes/models/paciente_model.dart';
 import 'package:sistema_citas_medicas/features/pacientes/widgets/campo_formulario_widget.dart';
@@ -89,15 +90,27 @@ class PacientesListScreen extends StatelessWidget {
       padding: const EdgeInsets.only(top: 40, bottom: 15, left: 15, right: 15),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[400],
-            radius: 20,
-            child: const Text(
-              'logo',
-              style: TextStyle(fontSize: 10, color: Colors.black),
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                ClinicLogo(size: 22, color: AppColors.accentColor),
+                const SizedBox(width: 8),
+                const Text(
+                  "CLÍNICA",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.accentColor,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 10),
+
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -107,7 +120,7 @@ class PacientesListScreen extends StatelessWidget {
               ),
               child: const Text(
                 'Inicio / Gestión / Pacientes',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
           ),
@@ -193,7 +206,7 @@ class PacientesListScreen extends StatelessWidget {
     final bool esInactivo = paciente.estado.toLowerCase() == 'inactivo';
 
     return Opacity(
-      opacity: esInactivo ? 0.6 : 1.0, 
+      opacity: esInactivo ? 0.6 : 1.0,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -215,11 +228,13 @@ class PacientesListScreen extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: esInactivo 
-                  ? Colors.grey.shade300 
+              backgroundColor: esInactivo
+                  ? Colors.grey.shade300
                   : AppColors.fieldBlue.withOpacity(0.3),
               child: Text(
-                paciente.nombres.isNotEmpty ? paciente.nombres[0].toUpperCase() : '?',
+                paciente.nombres.isNotEmpty
+                    ? paciente.nombres[0].toUpperCase()
+                    : '?',
                 style: const TextStyle(color: Colors.black),
               ),
             ),
@@ -234,35 +249,39 @@ class PacientesListScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       color: esInactivo ? Colors.grey.shade600 : Colors.black,
-                      decoration: esInactivo ? TextDecoration.lineThrough : null,
+                      decoration: esInactivo
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'C.I: ${paciente.cedula} • ${paciente.estado.toUpperCase()}',
                     style: TextStyle(
-                      color: esInactivo ? Colors.red.shade300 : Colors.grey[600],
+                      color: esInactivo
+                          ? Colors.red.shade300
+                          : Colors.grey[600],
                       fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             // --- BOTÓN EDITAR (Siempre visible) ---
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blueGrey, size: 20),
-              onPressed: () => _mostrarDialogoFormulario(
-                context,
-                vm,
-                paciente: paciente,
-              ),
+              onPressed: () =>
+                  _mostrarDialogoFormulario(context, vm, paciente: paciente),
             ),
 
             // --- BOTÓN CONDICIONAL: ELIMINAR O REACTIVAR ---
             esInactivo
                 ? IconButton(
-                    icon: const Icon(Icons.settings_backup_restore, color: Colors.green),
+                    icon: const Icon(
+                      Icons.settings_backup_restore,
+                      color: Colors.green,
+                    ),
                     tooltip: 'Reactivar Paciente',
                     onPressed: () {
                       _mostrarDialogoReactivacion(context, paciente, vm);
@@ -270,8 +289,12 @@ class PacientesListScreen extends StatelessWidget {
                     },
                   )
                 : IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                    onPressed: () => _mostrarDialogoConfirmacion(context, paciente, vm),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                    ),
+                    onPressed: () =>
+                        _mostrarDialogoConfirmacion(context, paciente, vm),
                   ),
           ],
         ),
@@ -293,7 +316,7 @@ class PacientesListScreen extends StatelessWidget {
     final cedulaCtrl = TextEditingController(text: paciente?.cedula);
     final telefonoCtrl = TextEditingController(text: paciente?.telefono);
     final correoCtrl = TextEditingController(text: paciente?.correo);
-    
+
     // Guardamos el estado actual si es edición, o asignamos 'Activo' por defecto si es nuevo
     final String estadoSeleccionado = paciente?.estado ?? 'Activo';
 
@@ -401,9 +424,10 @@ class PacientesListScreen extends StatelessWidget {
                         apellidos: apellidosCtrl.text,
                         telefono: telefonoCtrl.text,
                         correo: correoCtrl.text,
-                        estado: estadoSeleccionado, // Se asigna el estado silenciosamente
+                        estado:
+                            estadoSeleccionado, // Se asigna el estado silenciosamente
                       );
-                      
+
                       if (esEdicion) {
                         vm.editarPaciente(p);
                       } else {
@@ -437,12 +461,10 @@ class PacientesListScreen extends StatelessWidget {
   ) {
     showDialog(
       context: context,
-      barrierDismissible: false, 
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         title: const Text(
           'Eliminar Paciente',
           textAlign: TextAlign.center,
@@ -458,7 +480,7 @@ class PacientesListScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: TextButton(
-                  onPressed: () => Navigator.pop(context), 
+                  onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancelar',
                     style: TextStyle(
@@ -472,7 +494,7 @@ class PacientesListScreen extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent, 
+                    backgroundColor: Colors.redAccent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -504,6 +526,7 @@ class PacientesListScreen extends StatelessWidget {
       ),
     );
   }
+
   // --- AVISO DE CONFIRMACIÓN PARA REACTIVAR ---
   void _mostrarDialogoReactivacion(
     BuildContext context,
@@ -516,7 +539,11 @@ class PacientesListScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        title: const Icon(Icons.settings_backup_restore, color: Colors.green, size: 40),
+        title: const Icon(
+          Icons.settings_backup_restore,
+          color: Colors.green,
+          size: 40,
+        ),
         content: Text(
           '¿Deseas activar nuevamente a este paciente?',
           textAlign: TextAlign.center,
@@ -527,14 +554,21 @@ class PacientesListScreen extends StatelessWidget {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
               ),
               Expanded(
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
                   onPressed: () {
-                    vm.activarPaciente(paciente); // Aquí se conecta con tu ViewModel
+                    vm.activarPaciente(
+                      paciente,
+                    ); // Aquí se conecta con tu ViewModel
                     Navigator.pop(context);
 
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -545,7 +579,10 @@ class PacientesListScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text('Activar', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Activar',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
             ],

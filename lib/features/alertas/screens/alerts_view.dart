@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/core/widgets/clinic_logo.dart';
 import 'package:sistema_citas_medicas/features/alertas/viewmodels/alert_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/citas/viewmodels/citas_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/citas/screens/detalle_cita_view.dart';
@@ -41,7 +42,10 @@ class _AlertsViewState extends State<AlertsView> {
   ({IconData icono, Color color}) _iconoParaTipo(String tipo) {
     switch (tipo) {
       case 'Creada':
-        return (icono: Icons.add_circle_outline, color: const Color(0xFF42A5F5));
+        return (
+          icono: Icons.add_circle_outline,
+          color: const Color(0xFF42A5F5),
+        );
       case 'No atendida':
         return (icono: Icons.warning_amber_rounded, color: Colors.amber[800]!);
       case 'Reagendada':
@@ -51,7 +55,10 @@ class _AlertsViewState extends State<AlertsView> {
       case 'Completada':
         return (icono: Icons.task_alt, color: const Color(0xFF66BB6A));
       default:
-        return (icono: Icons.notifications_outlined, color: AppColors.fieldBlue);
+        return (
+          icono: Icons.notifications_outlined,
+          color: AppColors.fieldBlue,
+        );
     }
   }
 
@@ -67,7 +74,10 @@ class _AlertsViewState extends State<AlertsView> {
       'cedula': alerta['cedula'] ?? '',
     });
     if (!mounted) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const DetalleCitaView()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DetalleCitaView()),
+    );
   }
 
   // ─────────────────────────────────────────
@@ -91,22 +101,36 @@ class _AlertsViewState extends State<AlertsView> {
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.grey[600],
-                    radius: 22,
-                    child: const Text("logo",
-                        style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold)),
+                  ClinicLogo(size: 22, color: AppColors.accentColor),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "CLÍNICA",
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.accentColor,
+                      letterSpacing: 1.2,
+                    ),
                   ),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 15,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.fieldBlue,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text("Inicio / Alertas",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: const Text(
+                        "Inicio / Alertas",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -116,7 +140,10 @@ class _AlertsViewState extends State<AlertsView> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(30),
@@ -135,14 +162,21 @@ class _AlertsViewState extends State<AlertsView> {
                                 onTap: () => Navigator.pop(context),
                                 child: Container(
                                   width: 100,
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.btnGreen,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   alignment: Alignment.center,
-                                  child: const Text("Volver",
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                                  child: const Text(
+                                    "Volver",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -163,7 +197,10 @@ class _AlertsViewState extends State<AlertsView> {
                                     : "Alertas del Sistema (${vm.alertasFiltradas.length})",
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
                               ),
                             ),
 
@@ -180,35 +217,48 @@ class _AlertsViewState extends State<AlertsView> {
                                   label: "Creada",
                                   color: const Color(0xFF42A5F5),
                                   icono: Icons.add_circle_outline,
-                                  seleccionado: vm.filtroTipos.contains("Creada"),
+                                  seleccionado: vm.filtroTipos.contains(
+                                    "Creada",
+                                  ),
                                   onTap: () => vm.toggleFiltroTipo("Creada"),
                                 ),
                                 _TipoChip(
                                   label: "No atendida",
                                   color: Colors.amber[800]!,
                                   icono: Icons.warning_amber_rounded,
-                                  seleccionado: vm.filtroTipos.contains("No atendida"),
-                                  onTap: () => vm.toggleFiltroTipo("No atendida"),
+                                  seleccionado: vm.filtroTipos.contains(
+                                    "No atendida",
+                                  ),
+                                  onTap: () =>
+                                      vm.toggleFiltroTipo("No atendida"),
                                 ),
                                 _TipoChip(
                                   label: "Reagendada",
                                   color: const Color(0xFFAB47BC),
                                   icono: Icons.update,
-                                  seleccionado: vm.filtroTipos.contains("Reagendada"),
-                                  onTap: () => vm.toggleFiltroTipo("Reagendada"),
+                                  seleccionado: vm.filtroTipos.contains(
+                                    "Reagendada",
+                                  ),
+                                  onTap: () =>
+                                      vm.toggleFiltroTipo("Reagendada"),
                                 ),
                                 _TipoChip(
                                   label: "Completada",
                                   color: const Color(0xFF66BB6A),
                                   icono: Icons.task_alt,
-                                  seleccionado: vm.filtroTipos.contains("Completada"),
-                                  onTap: () => vm.toggleFiltroTipo("Completada"),
+                                  seleccionado: vm.filtroTipos.contains(
+                                    "Completada",
+                                  ),
+                                  onTap: () =>
+                                      vm.toggleFiltroTipo("Completada"),
                                 ),
                                 _TipoChip(
                                   label: "Cancelada",
                                   color: const Color(0xFFEF5350),
                                   icono: Icons.cancel_outlined,
-                                  seleccionado: vm.filtroTipos.contains("Cancelada"),
+                                  seleccionado: vm.filtroTipos.contains(
+                                    "Cancelada",
+                                  ),
                                   onTap: () => vm.toggleFiltroTipo("Cancelada"),
                                 ),
                               ],
@@ -218,7 +268,11 @@ class _AlertsViewState extends State<AlertsView> {
                                 padding: EdgeInsets.only(top: 6, left: 4),
                                 child: Text(
                                   "Mostrando todos los tipos",
-                                  style: TextStyle(fontSize: 11, color: Colors.black45, fontStyle: FontStyle.italic),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.black45,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
                               ),
 
@@ -247,10 +301,13 @@ class _AlertsViewState extends State<AlertsView> {
                               )
                             else
                               ...vm.alertasFiltradas.map((alerta) {
-                                final tipo = alerta['tipo_alerta'] as String? ?? '—';
+                                final tipo =
+                                    alerta['tipo_alerta'] as String? ?? '—';
                                 final icono = _iconoParaTipo(tipo);
                                 final leida = alerta['estado'] == 'Leída';
-                                final fechaStr = _formatearFecha(alerta['fecha'] ?? '');
+                                final fechaStr = _formatearFecha(
+                                  alerta['fecha'] ?? '',
+                                );
 
                                 return AlertCard(
                                   titulo: tipo,
@@ -264,7 +321,9 @@ class _AlertsViewState extends State<AlertsView> {
                                   onVerCita: () => _verCita(alerta),
                                   onMarcarLeida: leida
                                       ? null
-                                      : () => vm.marcarLeida(alerta['id_alerta'] as int),
+                                      : () => vm.marcarLeida(
+                                          alerta['id_alerta'] as int,
+                                        ),
                                 );
                               }).toList(),
 
@@ -288,7 +347,10 @@ class _AlertsViewState extends State<AlertsView> {
         color: AppColors.fieldBlue,
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+      child: Text(
+        titulo,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+      ),
     );
   }
 }

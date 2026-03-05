@@ -55,11 +55,20 @@ class _AgendaViewState extends State<AgendaView> {
 
     Widget destino;
     switch (accion) {
-      case "ver":       destino = const DetalleCitaView();   break;
-      case "reagendar": destino = const ReagendarCitaView(); break;
-      case "completar": destino = const MarcarCitaView();    break;
-      case "cancelar":  destino = const CancelarCitaView();  break;
-      default: return;
+      case "ver":
+        destino = const DetalleCitaView();
+        break;
+      case "reagendar":
+        destino = const ReagendarCitaView();
+        break;
+      case "completar":
+        destino = const MarcarCitaView();
+        break;
+      case "cancelar":
+        destino = const CancelarCitaView();
+        break;
+      default:
+        return;
     }
 
     Navigator.push(
@@ -89,7 +98,7 @@ class _AgendaViewState extends State<AgendaView> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.btnGreen,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
@@ -101,7 +110,10 @@ class _AgendaViewState extends State<AgendaView> {
                   alignment: Alignment.center,
                   child: const Text(
                     "Volver",
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
@@ -112,7 +124,10 @@ class _AgendaViewState extends State<AgendaView> {
             child: vm.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
                     child: Column(
                       children: [
                         // Filtros
@@ -182,11 +197,13 @@ class _AgendaViewState extends State<AgendaView> {
                             return AgendaAppointmentCard(
                               data: {
                                 'fecha': _formatearFecha(cita['fecha']),
-                                'hora': "${cita['hora_inicio']} - ${cita['hora_fin']}",
+                                'hora':
+                                    "${cita['hora_inicio']} - ${cita['hora_fin']}",
                                 'paciente': cita['nombre_paciente'] ?? '—',
                                 'estado': cita['estado'] ?? '—',
                               },
-                              onAction: (accion) => _manejarAccion(accion, cita),
+                              onAction: (accion) =>
+                                  _manejarAccion(accion, cita),
                             );
                           }).toList(),
 
