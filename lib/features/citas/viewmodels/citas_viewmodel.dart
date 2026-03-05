@@ -3,9 +3,14 @@ import '../models/cita_model.dart';
 import '../models/historial_cita_model.dart';
 import '../repositories/CitaRepository.dart';
 import '../../pacientes/models/paciente_model.dart';
+import '../../horarios/repositories/horario_repository.dart';
+import '../../horarios/models/horario_model.dart';
+import '../../horarios/repositories/restricciones_repository.dart';
 
 class CitaViewModel extends ChangeNotifier {
   final CitaRepository _repository = CitaRepository();
+  final HorarioRepository _horarioRepository = HorarioRepository();
+  final RestriccionesRepository _restriccionesRepository = RestriccionesRepository();
 
   // ─────────────────────────────────────────
   // ESTADO — Registro
@@ -13,6 +18,10 @@ class CitaViewModel extends ChangeNotifier {
   List<PacienteModel> _todosLosPacientes = [];
   List<PacienteModel> _pacientesFiltrados = [];
   List<String> _franjasHorarias = [];
+  HorarioAtencion? _horarioActivo;
+  String? _mensajeFranjas; // mensaje cuando no hay horario o día no laborable
+
+  String? get mensajeFranjas => _mensajeFranjas;
   PacienteModel? _pacienteSeleccionado;
   DateTime _fechaSeleccionada = DateTime.now();
   String? _horaSeleccionada;
@@ -86,7 +95,10 @@ class CitaViewModel extends ChangeNotifier {
     try {
       _todosLosPacientes = await _repository.obtenerPacientesActivos();
       _pacientesFiltrados = _todosLosPacientes;
-      _generarFranjasDe20Minutos("08:00", "17:00");
+      // Cargar horario activo una sola vez
+      _horarioActivo = await _horarioRepository.obtenerHorarioActivo();
+      // Generar franjas para la fecha inicial
+      await _generarFranjasParaFecha(_fechaSeleccionada);
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Error al cargar datos: $e';
@@ -110,10 +122,10 @@ class CitaViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFecha(DateTime fecha) {
+  Future<void> setFecha(DateTime fecha) async {
     _fechaSeleccionada = fecha;
     _horaSeleccionada = null;
-    notifyListeners();
+    await _generarFranjasParaFecha(fecha);
   }
 
   void setHora(String hora) {
@@ -134,6 +146,17 @@ class CitaViewModel extends ChangeNotifier {
     if (!formularioValido) return false;
     _setLoading(true);
     try {
+      // Validar que el paciente no tenga ya una cita activa
+      final tieneCitaActiva = await _repository.tieneCitaActiva(
+        _pacienteSeleccionado!.idPaciente!,
+      );
+      if (tieneCitaActiva) {
+        _errorMessage =
+            'El paciente ya tiene una cita activa (Ingresada, Confirmada o Reagendada). '
+            'Debe completar, cancelar o reagendar la cita existente antes de crear una nueva.';
+        _setLoading(false);
+        return false;
+      }
       final nuevaCita = Cita(
         idCita: 0,
         idPaciente: _pacienteSeleccionado!.idPaciente!,
@@ -368,6 +391,98 @@ class CitaViewModel extends ChangeNotifier {
   // ─────────────────────────────────────────
   // HELPERS PRIVADOS
   // ─────────────────────────────────────────
+
+  // Genera franjas válidas para una fecha considerando:
+  // 1. Horario laboral configurado
+  // 2. Día de la semana permitido
+  // 3. Restricciones activas del día (feriados, reuniones, etc.)
+  // 4. Franjas ya ocupadas por citas existentes
+  Future<void> _generarFranjasParaFecha(DateTime fecha) async {
+    _franjasHorarias.clear();
+    _mensajeFranjas = null;
+
+    // Sin horario configurado — fallback al horario por defecto
+    if (_horarioActivo == null) {
+      _generarFranjasDe20Minutos('08:00', '17:00');
+      notifyListeners();
+      return;
+    }
+
+    final horario = _horarioActivo!;
+
+    // Verificar que el día de la semana esté en los días laborables
+    final diasMap = {'1': 'L', '2': 'M', '3': 'X', '4': 'J', '5': 'V', '6': 'S', '7': 'D'};
+    final diaSemana = diasMap[fecha.weekday.toString()]!;
+    final diasLaborables = horario.diasAtencion.split(',');
+
+    if (!diasLaborables.contains(diaSemana)) {
+      _mensajeFranjas = 'Este día no es laborable según la configuración de horario.';
+      notifyListeners();
+      return;
+    }
+
+    // Generar todas las franjas base de la jornada
+    final franjasCandidatas = <String>[];
+    final inicio = _horaAMinutos(horario.horaInicio);
+    final fin    = _horaAMinutos(horario.horaFin);
+    final pausaI = horario.pausaInicio != null && horario.pausaInicio!.isNotEmpty
+        ? _horaAMinutos(horario.pausaInicio!)
+        : null;
+    final pausaF = horario.pausaFin != null && horario.pausaFin!.isNotEmpty
+        ? _horaAMinutos(horario.pausaFin!)
+        : null;
+
+    for (int t = inicio; t + 20 <= fin; t += 20) {
+      // Excluir franja si cae dentro de la pausa
+      if (pausaI != null && pausaF != null) {
+        if (t >= pausaI && t < pausaF) continue;
+      }
+      franjasCandidatas.add(_minutosAHora(t));
+    }
+
+    // Obtener restricciones activas para esta fecha
+    final fechaStr = '${fecha.year}-'
+        '${fecha.month.toString().padLeft(2, '0')}-'
+        '${fecha.day.toString().padLeft(2, '0')}';
+
+    final restricciones = await _restriccionesRepository.obtenerPorFecha(fechaStr);
+
+    // Verificar si hay una restricción que bloquea TODO el día
+    final diaCompleto = restricciones.where((r) =>
+        r.horaInicio == horario.horaInicio && r.horaFin == horario.horaFin).toList();
+
+    if (diaCompleto.isNotEmpty) {
+      _mensajeFranjas = 'No hay disponibilidad este día: ${diaCompleto.first.tipo}.';
+      notifyListeners();
+      return;
+    }
+
+    // Filtrar franjas bloqueadas por restricciones parciales
+    final franjasLibres = franjasCandidatas.where((franja) {
+      final franjaMin = _horaAMinutos(franja);
+      final franjaFinMin = franjaMin + 20;
+      for (final r in restricciones) {
+        final rI = _horaAMinutos(r.horaInicio);
+        final rF = _horaAMinutos(r.horaFin);
+        // Bloquear si la franja se superpone con la restricción
+        if (franjaMin < rF && franjaFinMin > rI) return false;
+      }
+      return true;
+    }).toList();
+
+    // Filtrar franjas ya ocupadas por citas del mismo día
+    final horasOcupadas = (await _repository.obtenerHorasOcupadasPorFecha(fechaStr)).toSet();
+
+    _franjasHorarias = franjasLibres
+        .where((f) => !horasOcupadas.contains(f))
+        .toList();
+
+    if (_franjasHorarias.isEmpty) {
+      _mensajeFranjas = 'No hay franjas disponibles para este día.';
+    }
+
+    notifyListeners();
+  }
 
   void _generarFranjasDe20Minutos(String inicioStr, String finStr) {
     _franjasHorarias.clear();

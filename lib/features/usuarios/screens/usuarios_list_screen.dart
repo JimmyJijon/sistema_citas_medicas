@@ -1,31 +1,11 @@
 import 'package:flutter/material.dart';
-// Asumiendo que tienes estos archivos según los pasos anteriores.
-// Si no, puedes copiar las clases AppHeader y AppColors al final de este archivo.
+import 'package:provider/provider.dart';
 import 'package:sistema_citas_medicas/core/theme/app_colors.dart';
+import 'package:sistema_citas_medicas/core/models/usuario_model.dart';
+import 'package:sistema_citas_medicas/features/usuarios/viewmodels/usuario_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/citas/widgets/app_header.dart';
+import 'usuario_form_screen.dart';
 
-// ==========================================
-// 1. MODELO DE DATOS
-// ==========================================
-class Usuario {
-  String nombre;
-  String usuario;
-  String rol;
-  String estado;
-  String password;
-
-  Usuario({
-    required this.nombre,
-    required this.usuario,
-    required this.rol,
-    required this.estado,
-    required this.password,
-  });
-}
-
-// ==========================================
-// 2. PANTALLA LISTA DE USUARIOS
-// ==========================================
 class GestionUsuariosScreen extends StatefulWidget {
   const GestionUsuariosScreen({super.key});
 
@@ -34,34 +14,46 @@ class GestionUsuariosScreen extends StatefulWidget {
 }
 
 class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
-  // Lista simulada
-  List<Usuario> usuarios = [
-    Usuario(
-      nombre: "Jenny Montalvo",
-      usuario: "jenny.m",
-      rol: "Recepcionista",
-      estado: "Activo",
-      password: "123456",
-    ),
-    Usuario(
-      nombre: "Ana Perez",
-      usuario: "ana.p",
-      rol: "Recepcionista",
-      estado: "Activo",
-      password: "123456",
-    ),
-  ];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UsuarioViewModel>().cargarUsuarios();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _irAFormulario({Usuario? usuario}) async {
+    final vm = context.read<UsuarioViewModel>();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider.value(
+          value: vm,
+          child: UsuarioFormScreen(usuarioParaEditar: usuario),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<UsuarioViewModel>();
+
     return Scaffold(
-      backgroundColor: AppColors.background, // Color de fondo del tema
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // HEADER DEL TEMA
           const AppHeader(title: "Inicio / Configuración / Usuarios"),
 
-          // BOTÓN VOLVER
+          // Botón Volver
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
             child: Align(
@@ -92,10 +84,9 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
             ),
           ),
 
-          // CONTENIDO PRINCIPAL
           Expanded(
             child: Container(
-              margin: const EdgeInsets.all(20),
+              margin: const EdgeInsets.fromLTRB(20, 5, 20, 20),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -110,19 +101,19 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
               ),
               child: Column(
                 children: [
-                  // Título de sección
+                  // Título
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: AppColors.fieldBlue,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: const Center(
                       child: Text(
                         "Gestión de Usuarios",
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -132,102 +123,74 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
 
                   const SizedBox(height: 15),
 
-                  // Botón Nuevo Usuario
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.btnGreen,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () async {
-                        final nuevoUsuario = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const FormularioUsuarioScreen(), // Modo crear
+                  // Buscador + Botón Nuevo
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppColors.fieldBlue,
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        );
-
-                        if (nuevoUsuario != null && nuevoUsuario is Usuario) {
-                          setState(() {
-                            usuarios.add(nuevoUsuario);
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.add, color: Colors.black),
-                      label: const Text(
-                        "Nuevo Usuario",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: vm.setFiltro,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: const InputDecoration(
+                              hintText: "Buscar por nombre, correo o rol...",
+                              hintStyle: TextStyle(fontSize: 13, color: Colors.black45),
+                              prefixIcon: Icon(Icons.search, size: 20, color: Colors.black45),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.btnGreen,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
+                        onPressed: () => _irAFormulario(),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text("Nuevo", style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 15),
 
-                  // Lista de Usuarios
+                  // Lista
                   Expanded(
-                    child: ListView.separated(
-                      itemCount: usuarios.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final user = usuarios[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.blueGrey[100],
-                              child: Text(
-                                user.nombre.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                    child: vm.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : vm.usuariosFiltrados.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  "No se encontraron usuarios.",
+                                  style: TextStyle(color: Colors.black45),
                                 ),
+                              )
+                            : ListView.separated(
+                                itemCount: vm.usuariosFiltrados.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final u = vm.usuariosFiltrados[index];
+                                  final activo = u.estado == 'A';
+                                  return _UsuarioCard(
+                                    usuario: u,
+                                    onEditar: () => _irAFormulario(usuario: u),
+                                    onToggleEstado: () => vm.cambiarEstado(u.idUsuario, u.estado),
+                                  );
+                                },
                               ),
-                            ),
-                            title: Text(
-                              user.nombre,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text("${user.rol} • ${user.estado}"),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blueGrey,
-                              ),
-                              onPressed: () async {
-                                final actualizado = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => FormularioUsuarioScreen(
-                                      usuarioParaEditar: user,
-                                    ),
-                                  ),
-                                );
-
-                                if (actualizado != null &&
-                                    actualizado is Usuario) {
-                                  setState(() {
-                                    usuarios[index] = actualizado;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),
@@ -239,254 +202,180 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   }
 }
 
-// ==========================================
-// 3. PANTALLA FORMULARIO (CREAR / EDITAR)
-// ==========================================
-class FormularioUsuarioScreen extends StatefulWidget {
-  final Usuario? usuarioParaEditar;
+// ─────────────────────────────────────────
+// CARD DE USUARIO
+// ─────────────────────────────────────────
 
-  const FormularioUsuarioScreen({super.key, this.usuarioParaEditar});
+class _UsuarioCard extends StatelessWidget {
+  final Usuario usuario;
+  final VoidCallback onEditar;
+  final VoidCallback onToggleEstado;
 
-  @override
-  State<FormularioUsuarioScreen> createState() =>
-      _FormularioUsuarioScreenState();
-}
+  const _UsuarioCard({
+    required this.usuario,
+    required this.onEditar,
+    required this.onToggleEstado,
+  });
 
-class _FormularioUsuarioScreenState extends State<FormularioUsuarioScreen> {
-  final nombreController = TextEditingController();
-  final usuarioController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmController = TextEditingController();
-
-  String rol = "Recepcionista";
-  String estado = "Activo";
-  bool esEdicion = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Lógica para cargar datos si es edición
-    if (widget.usuarioParaEditar != null) {
-      esEdicion = true;
-      nombreController.text = widget.usuarioParaEditar!.nombre;
-      usuarioController.text = widget.usuarioParaEditar!.usuario;
-      passwordController.text = widget.usuarioParaEditar!.password;
-      confirmController.text = widget.usuarioParaEditar!.password;
-      rol = widget.usuarioParaEditar!.rol;
-      estado = widget.usuarioParaEditar!.estado;
+  Color get _colorRol {
+    switch (usuario.rol) {
+      case 'Doctor':        return const Color(0xFF42A5F5);
+      case 'Recepcionista': return const Color(0xFF66BB6A);
+      default:              return Colors.grey;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          // Header
-          const AppHeader(title: "Inicio / Usuarios / Registro"),
+    final activo = usuario.estado == 'A';
 
-          // CONTENIDO CENTRADO Y ESTILIZADO
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Container(
-                  padding: const EdgeInsets.all(25),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        esEdicion ? "Editar Usuario" : "Registrar Usuario",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      _campo("Nombre Completo", nombreController, Icons.person),
-                      _campo(
-                        "Usuario",
-                        usuarioController,
-                        Icons.account_circle,
-                      ),
-
-                      _dropdown("Rol", [
-                        "Recepcionista",
-                        "Administrador",
-                        "Doctor",
-                      ], (val) => rol = val),
-                      _dropdown("Estado", [
-                        "Activo",
-                        "Inactivo",
-                      ], (val) => estado = val),
-
-                      _campo(
-                        "Contraseña",
-                        passwordController,
-                        Icons.lock,
-                        obscure: true,
-                      ),
-                      _campo(
-                        "Confirmar Contraseña",
-                        confirmController,
-                        Icons.lock_outline,
-                        obscure: true,
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red[400],
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text(
-                                "Cancelar",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.btnGreen,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: () {
-                                // Retornamos el objeto Usuario modificado o creado
-                                Navigator.pop(
-                                  context,
-                                  Usuario(
-                                    nombre: nombreController.text,
-                                    usuario: usuarioController.text,
-                                    rol: rol,
-                                    estado: estado,
-                                    password: passwordController.text,
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                esEdicion ? "Actualizar" : "Guardar",
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: activo ? Colors.white : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(15),
+        border: Border(
+          left: BorderSide(color: activo ? _colorRol : Colors.grey.shade300, width: 4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-    );
-  }
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            // Avatar inicial
+            CircleAvatar(
+              backgroundColor: activo ? _colorRol.withOpacity(0.15) : Colors.grey.shade200,
+              radius: 22,
+              child: Text(
+                usuario.nombre.substring(0, 1).toUpperCase(),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: activo ? _colorRol : Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
 
-  Widget _campo(
-    String label,
-    TextEditingController controller,
-    IconData icon, {
-    bool obscure = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Colors.grey),
-          filled: true,
-          fillColor: Colors.grey[50], // Fondo muy suave para el input
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Colors.blueGrey),
-          ),
-        ),
-      ),
-    );
-  }
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${usuario.nombre} ${usuario.apellido}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: activo ? Colors.black87 : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    usuario.correo,
+                    style: const TextStyle(fontSize: 12, color: Colors.black45),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      // Badge rol
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _colorRol.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: _colorRol.withOpacity(0.4)),
+                        ),
+                        child: Text(
+                          usuario.rol,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _colorRol,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Badge estado
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: activo
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: activo
+                                ? Colors.green.withOpacity(0.4)
+                                : Colors.red.withOpacity(0.4),
+                          ),
+                        ),
+                        child: Text(
+                          activo ? 'Activo' : 'Inactivo',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: activo ? Colors.green : Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-  Widget _dropdown(
-    String label,
-    List<String> items,
-    Function(String) onChanged,
-  ) {
-    // Aseguramos que el valor actual esté en la lista, si no, tomamos el primero
-    String initialValue =
-        items.contains(
-          esEdicion && label == "Rol"
-              ? rol
-              : (esEdicion && label == "Estado" ? estado : items.first),
-        )
-        ? (label == "Rol" ? rol : estado)
-        : items.first;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: DropdownButtonFormField<String>(
-        value: initialValue,
-        items: items
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
-        onChanged: (val) {
-          if (val != null) onChanged(val);
-        },
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(
-            Icons.arrow_drop_down_circle_outlined,
-            color: Colors.grey,
-          ),
-          filled: true,
-          fillColor: Colors.grey[50],
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Colors.blueGrey),
-          ),
+            // Acciones
+            Column(
+              children: [
+                // Editar
+                Tooltip(
+                  message: "Editar",
+                  child: InkWell(
+                    onTap: onEditar,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.edit_outlined, size: 18, color: Colors.blueGrey),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Activar / Inactivar
+                Tooltip(
+                  message: activo ? "Inactivar" : "Activar",
+                  child: InkWell(
+                    onTap: onToggleEstado,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: activo
+                            ? Colors.red.withOpacity(0.1)
+                            : Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        activo ? Icons.person_off_outlined : Icons.person_outlined,
+                        size: 18,
+                        color: activo ? Colors.red : Colors.green,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

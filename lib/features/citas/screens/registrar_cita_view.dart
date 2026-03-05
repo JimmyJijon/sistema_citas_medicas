@@ -19,8 +19,6 @@ class RegistrarCitaView extends StatefulWidget {
 class _RegistrarCitaViewState extends State<RegistrarCitaView> {
   final TextEditingController _observacionController = TextEditingController();
 
-  // TODO: Reemplazar con el id del usuario logueado cuando integres el módulo de auth
-
   @override
   void initState() {
     super.initState();
@@ -65,9 +63,9 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
       },
     );
 
-    if (fechaEscogida != null) {
-      vm.setFecha(fechaEscogida);
-    }
+      if (fechaEscogida != null) {
+        await vm.setFecha(fechaEscogida);
+      }
   }
 
   // ─────────────────────────────────────────
@@ -185,6 +183,29 @@ class _RegistrarCitaViewState extends State<RegistrarCitaView> {
                             label: "Franja Horaria",
                             child: HoraSelector(),
                           ),
+
+                          // Mensaje cuando no hay franjas disponibles
+                          if (vm.mensajeFranjas != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.info_outline,
+                                      size: 14, color: Colors.orange),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      vm.mensajeFranjas!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.orange,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
 
                           const SizedBox(height: 10),
 

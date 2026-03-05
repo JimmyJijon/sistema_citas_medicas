@@ -4,6 +4,8 @@ import 'package:sistema_citas_medicas/features/alertas/viewmodels/alert_viewmode
 import 'package:sistema_citas_medicas/features/auth/screens/login_screen.dart';
 import 'package:sistema_citas_medicas/features/auth/viewmodels/auth_viewmodel.dart';
 import 'package:sistema_citas_medicas/features/citas/viewmodels/citas_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/horarios/viewmodels/horario_viewmodel.dart';
+import 'package:sistema_citas_medicas/features/usuarios/viewmodels/usuario_viewmodel.dart';
 
 
 void main() async {
@@ -21,6 +23,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CitaViewModel()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => AlertViewModel()),
+        ChangeNotifierProvider(create:  (_) => UsuarioViewModel()),
+        ChangeNotifierProvider(create: (_) => HorarioViewModel()),
         // agrega aquí los demás viewmodels cuando los necesites
       ],
       child: MaterialApp(

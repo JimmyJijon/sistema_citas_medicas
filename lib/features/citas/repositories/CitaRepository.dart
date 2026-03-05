@@ -19,6 +19,17 @@ class CitaRepository {
     return await db.insert('cita', map);
   }
 
+  // Verifica si el paciente ya tiene una cita en estado activo
+  Future<bool> tieneCitaActiva(int idPaciente) async {
+    final db = await _dbHelper.database;
+    final result = await db.query(
+      'cita',
+      where: 'id_paciente = ? AND estado IN (?, ?, ?)',
+      whereArgs: [idPaciente, 'Ingresada', 'Confirmada', 'Reagendada'],
+    );
+    return result.isNotEmpty;
+  }
+
   Future<List<Map<String, dynamic>>> obtenerTodasLasCitas() async {
     final db = await _dbHelper.database;
     return await db.rawQuery('''
@@ -52,6 +63,18 @@ class CitaRepository {
       WHERE c.fecha = ?
       ORDER BY c.hora_inicio ASC
     ''', [fechaStr]);
+  }
+
+  // Horas ocupadas de un día — para excluir franjas al registrar
+  Future<List<String>> obtenerHorasOcupadasPorFecha(String fechaStr) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'cita',
+      columns: ['hora_inicio'],
+      where: "fecha = ? AND estado NOT IN ('Cancelada', 'Completada')",
+      whereArgs: [fechaStr],
+    );
+    return maps.map((m) => m['hora_inicio'] as String).toList();
   }
 
   Future<int> actualizarCita(Cita cita) async {
@@ -106,4 +129,5 @@ class CitaRepository {
       'fecha_generacion': DateTime.now().toIso8601String(),
     });
   }
+
 }
